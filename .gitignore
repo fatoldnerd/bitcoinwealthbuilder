@@ -7,6 +7,9 @@ yarn-error.log*
 # Production build
 build/
 
+# Vercel
+.vercel
+
 # Environment variables
 .env
 .env.local
