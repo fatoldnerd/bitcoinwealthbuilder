@@ -38,6 +38,101 @@
   min-width: 1400px; /* Ensure horizontal scroll for new columns */
 }
 
+/* Margin Call Table Styling */
+.margin-call-table {
+  margin-top: 1rem;
+  overflow-x: auto;
+}
+
+.ltv-table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: #2A2A2A;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.ltv-table th {
+  background-color: #1E1E1E;
+  color: #FF8C00;
+  padding: 1rem;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.9rem;
+  border-bottom: 2px solid #444;
+}
+
+.ltv-table td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #444;
+  color: #EAEAEA;
+  font-size: 0.85rem;
+}
+
+.ltv-table tr:last-child td {
+  border-bottom: none;
+}
+
+.safe-row {
+  background-color: rgba(40, 167, 69, 0.1);
+}
+
+.safe-row:hover {
+  background-color: rgba(40, 167, 69, 0.2);
+}
+
+.warning-row {
+  background-color: rgba(255, 193, 7, 0.1);
+}
+
+.warning-row:hover {
+  background-color: rgba(255, 193, 7, 0.2);
+}
+
+.danger-row {
+  background-color: rgba(220, 53, 69, 0.1);
+}
+
+.danger-row:hover {
+  background-color: rgba(220, 53, 69, 0.2);
+}
+
+.liquidation-badge {
+  background-color: #dc3545;
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.2rem 0.5rem;
+  border-radius: 12px;
+  margin-left: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.add-collateral {
+  color: #dc3545;
+  font-weight: 600;
+}
+
+.safe-status {
+  color: #28a745;
+  font-weight: 500;
+}
+
+.table-note {
+  margin-top: 0.75rem;
+  padding: 0.5rem;
+  background-color: #1E1E1E;
+  border-radius: 4px;
+  text-align: center;
+}
+
+.table-note small {
+  color: #AAAAAA;
+  font-size: 0.8rem;
+}
+
 /* LTV Scenarios Styling */
 .ltv-scenarios-section {
   margin-top: 2rem;

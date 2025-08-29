@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, ReferenceLine, Legend } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, ReferenceLine, Legend, LabelList } from 'recharts';
 
 const LTVCalculator = () => {
   // State for input values
   const [collateralAmount, setCollateralAmount] = useState('');
   const [bitcoinPrice, setBitcoinPrice] = useState('');
   const [loanAmount, setLoanAmount] = useState('');
+  const [liquidationThreshold, setLiquidationThreshold] = useState('85');
   const [isLoadingPrice, setIsLoadingPrice] = useState(false);
   
   // State for calculated results
@@ -39,6 +40,7 @@ const LTVCalculator = () => {
     const collateral = parseFloat(collateralAmount) || 0;
     const price = parseFloat(bitcoinPrice) || 0;
     const loan = parseFloat(loanAmount) || 0;
+    const threshold = parseFloat(liquidationThreshold) || 85;
 
     if (collateral <= 0 || price <= 0 || loan <= 0) {
       alert('Please enter valid positive numbers for all fields');
@@ -51,8 +53,9 @@ const LTVCalculator = () => {
     // Calculate LTV ratio
     const ltvRatio = (loan / totalCollateralValue) * 100;
     
-    // Calculate liquidation price (assuming 100% LTV triggers liquidation)
-    const liquidationPrice = loan / collateral;
+    // Calculate liquidation price using custom threshold
+    // Formula: Liquidation Price = (Loan Amount / Collateral BTC) / (Liquidation Threshold / 100)
+    const liquidationPrice = (loan / collateral) / (threshold / 100);
 
     // Determine risk level based on LTV
     let riskLevel = 'safe';
@@ -70,6 +73,7 @@ const LTVCalculator = () => {
       ltvRatio: ltvRatio.toFixed(2),
       liquidationPrice: liquidationPrice.toFixed(2),
       totalCollateralValue: totalCollateralValue.toFixed(2),
+      liquidationThreshold: threshold,
       riskLevel: riskLevel,
       riskClass: riskClass
     });
@@ -150,7 +154,65 @@ const LTVCalculator = () => {
         bitcoinPrice: newPrice,
         collateralValue: newCollateralValue,
         ltvRatio: newLTV,
-        loanValue: loan
+        loanValue: loan,
+        isDangerPoint: Math.abs(newLTV - 60) < 2
+      };
+    });
+  };
+
+  // Calculate the exact Bitcoin price where LTV hits danger threshold (60%)
+  const getDangerThresholdPrice = () => {
+    if (!collateralAmount || !loanAmount) return null;
+    
+    const collateral = parseFloat(collateralAmount);
+    const loan = parseFloat(loanAmount);
+    
+    // At 60% LTV: loan / (collateral * price) = 0.6
+    // Solving for price: price = loan / (collateral * 0.6)
+    const dangerPrice = loan / (collateral * 0.6);
+    
+    return dangerPrice;
+  };
+
+  // Generate margin call and liquidation table data
+  const getMarginCallData = () => {
+    if (!collateralAmount || !loanAmount || !bitcoinPrice || !results) return [];
+    
+    const collateral = parseFloat(collateralAmount);
+    const loan = parseFloat(loanAmount);
+    const currentPrice = parseFloat(bitcoinPrice);
+    const threshold = parseFloat(liquidationThreshold);
+    const originalLTV = parseFloat(results.ltvRatio);
+    
+    const ltvLevels = [70, 80, threshold];
+    
+    return ltvLevels.map(ltvLevel => {
+      // Calculate trigger price: price at which this LTV level is reached
+      // At LTV level: loan / (collateral * price) = ltvLevel / 100
+      // Solving for price: price = loan / (collateral * (ltvLevel / 100))
+      const triggerPrice = loan / (collateral * (ltvLevel / 100));
+      
+      // Calculate required collateral to restore original LTV
+      // Target collateral value at trigger price to maintain original LTV:
+      // Required total value = loan / (originalLTV / 100)
+      // Required collateral value = Required total value - (collateral * triggerPrice)
+      const requiredTotalValue = loan / (originalLTV / 100);
+      const currentCollateralValue = collateral * triggerPrice;
+      const requiredAdditionalCollateral = Math.max(0, requiredTotalValue - currentCollateralValue);
+      
+      // Determine risk class and if it's liquidation level
+      let riskClass = 'safe-row';
+      if (ltvLevel >= 70) riskClass = 'warning-row';
+      if (ltvLevel >= 80) riskClass = 'danger-row';
+      
+      const isLiquidation = ltvLevel === threshold;
+      
+      return {
+        ltvLevel: ltvLevel,
+        bitcoinPrice: triggerPrice,
+        actionRequired: requiredAdditionalCollateral,
+        riskClass: riskClass,
+        isLiquidation: isLiquidation
       };
     });
   };
@@ -218,6 +280,23 @@ const LTVCalculator = () => {
           />
         </div>
 
+        <div className="form-group">
+          <label className="form-label">Liquidation Threshold (%)</label>
+          <input
+            type="number"
+            className="form-input"
+            value={liquidationThreshold}
+            onChange={(e) => setLiquidationThreshold(e.target.value)}
+            placeholder="Enter liquidation threshold"
+            min="1"
+            max="100"
+            step="1"
+          />
+          <div style={{ fontSize: '0.8rem', marginTop: '0.25rem', color: '#AAAAAA' }}>
+            LTV ratio at which liquidation occurs (default: 85%)
+          </div>
+        </div>
+
         <button 
           className="calculate-button"
           onClick={calculateLTV}
@@ -247,7 +326,7 @@ const LTVCalculator = () => {
               <div className="result-label">Liquidation Price</div>
               <div className="result-value">${formatNumber(results.liquidationPrice)}</div>
               <div style={{ fontSize: '0.8rem', marginTop: '0.5rem', color: '#AAAAAA' }}>
-                Bitcoin price at 100% LTV
+                Bitcoin price at {results.liquidationThreshold}% LTV
               </div>
             </div>
           </div>
@@ -369,7 +448,12 @@ const LTVCalculator = () => {
                   dataKey="ltvRatio" 
                   stroke="#007BFF" 
                   strokeWidth={3}
-                  dot={{ fill: '#007BFF', strokeWidth: 2, r: 4 }}
+                  dot={(props) => {
+                    if (props.payload && props.payload.isDangerPoint) {
+                      return <circle cx={props.cx} cy={props.cy} r={8} fill="#dc3545" stroke="#ffffff" strokeWidth={2} />;
+                    }
+                    return <circle cx={props.cx} cy={props.cy} r={4} fill="#007BFF" strokeWidth={2} />;
+                  }}
                   name="LTV Ratio"
                 />
                 <Line 
@@ -393,41 +477,56 @@ const LTVCalculator = () => {
                 />
               </LineChart>
             </ResponsiveContainer>
+            {getDangerThresholdPrice() && (
+              <div className="chart-note" style={{ 
+                marginTop: '1rem', 
+                padding: '0.75rem', 
+                backgroundColor: '#2d1b1b', 
+                border: '1px solid #dc3545', 
+                borderRadius: '6px',
+                textAlign: 'center'
+              }}>
+                <strong style={{ color: '#dc3545' }}>Critical Price Alert:</strong> Your LTV will hit the danger threshold (60%) when Bitcoin drops to <strong>${formatNumber(getDangerThresholdPrice())}</strong>
+              </div>
+            )}
           </div>
 
-          {/* Liquidation Price Chart */}
+          {/* Margin Call & Liquidation Table */}
           <div className="chart-container">
-            <h3 className="chart-title">Liquidation Prices at Different LTV Ratios</h3>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={getLiquidationScenarios()}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-                <XAxis 
-                  dataKey="name" 
-                  stroke="#EAEAEA"
-                />
-                <YAxis 
-                  stroke="#EAEAEA"
-                  tickFormatter={(value) => `$${(value / 1000).toFixed(0)}K`}
-                />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: '#1E1E1E', 
-                    border: '1px solid #333',
-                    borderRadius: '8px',
-                    color: '#EAEAEA'
-                  }}
-                  formatter={(value, name) => [`$${formatNumber(value)}`, name]}
-                />
-                <ReferenceLine y={parseFloat(bitcoinPrice)} stroke="#FF8C00" strokeDasharray="5 5" label="Current BTC Price" />
-                <Bar 
-                  dataKey="liquidationPrice" 
-                  fill="#dc3545" 
-                  name="Liquidation Price"
-                />
-              </BarChart>
-            </ResponsiveContainer>
-            <div className="chart-note">
-              <small>Red bars show Bitcoin prices where liquidation occurs at each LTV ratio. Current price line shows your safety margin.</small>
+            <h3 className="chart-title">Margin Call & Liquidation Table</h3>
+            <div className="margin-call-table">
+              <table className="ltv-table">
+                <thead>
+                  <tr>
+                    <th>LTV Level</th>
+                    <th>Bitcoin Price</th>
+                    <th>Action Required</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {getMarginCallData().map((row, index) => (
+                    <tr key={index} className={row.riskClass}>
+                      <td>
+                        <strong>{row.ltvLevel}%</strong>
+                        {row.isLiquidation && <span className="liquidation-badge">LIQUIDATION</span>}
+                      </td>
+                      <td>${formatNumber(row.bitcoinPrice)}</td>
+                      <td>
+                        {row.actionRequired > 0 ? (
+                          <span className="add-collateral">
+                            Add ${formatNumber(row.actionRequired)} collateral
+                          </span>
+                        ) : (
+                          <span className="safe-status">No action needed</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <div className="table-note">
+                <small>Shows Bitcoin prices that trigger different LTV levels and the collateral needed to restore your original LTV ratio.</small>
+              </div>
             </div>
           </div>
 

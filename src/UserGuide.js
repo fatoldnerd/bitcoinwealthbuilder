@@ -417,6 +417,33 @@ const UserGuide = () => {
               <div className="formula-box">
                 <strong>LTV = (Loan Amount ÷ Collateral Value) × 100%</strong>
               </div>
+              <p>
+                The LTV Calculator now features a customizable <strong>Liquidation Threshold</strong> (default 85%) 
+                that represents the LTV ratio at which your loan becomes at risk of liquidation. This makes the 
+                calculator much more realistic compared to the traditional 100% liquidation assumption.
+              </p>
+            </div>
+
+            <div className="guide-section">
+              <h3>Key Parameters</h3>
+              <div className="parameter-grid">
+                <div className="parameter-item">
+                  <strong>Collateral Amount (BTC):</strong>
+                  <p>The amount of Bitcoin you're using as collateral for your loan.</p>
+                </div>
+                <div className="parameter-item">
+                  <strong>Current Bitcoin Price ($):</strong>
+                  <p>Auto-fetched from CoinGecko or manually entered. Click 'Refresh' for the latest price.</p>
+                </div>
+                <div className="parameter-item">
+                  <strong>Desired Loan Amount ($):</strong>
+                  <p>The amount you want to borrow against your Bitcoin collateral.</p>
+                </div>
+                <div className="parameter-item">
+                  <strong>Liquidation Threshold (%):</strong>
+                  <p>The LTV ratio at which liquidation occurs (default: 85%). Most real-world lending platforms liquidate between 80-90% LTV, making this much more realistic than the old 100% assumption.</p>
+                </div>
+              </div>
             </div>
 
             <div className="guide-section">
@@ -446,7 +473,7 @@ const UserGuide = () => {
                 </div>
                 <div className="parameter-item">
                   <strong>Liquidation Price:</strong>
-                  <p>The Bitcoin price at which your loan becomes at risk. Always maintain significant buffer above this price.</p>
+                  <p>The Bitcoin price at which your loan reaches your custom liquidation threshold (e.g., 85% LTV). This is much more realistic than assuming 100% LTV liquidation. Always maintain significant buffer above this price.</p>
                 </div>
                 <div className="parameter-item">
                   <strong>Total Collateral Value:</strong>
@@ -458,7 +485,7 @@ const UserGuide = () => {
             <div className="guide-section">
               <h3>Visual Risk Analysis</h3>
               <p>
-                The LTV Calculator provides three powerful charts to help you understand and manage borrowing risk:
+                The LTV Calculator provides powerful visualizations to help you understand and manage borrowing risk:
               </p>
               <div className="feature-list">
                 <div className="parameter-item">
@@ -467,15 +494,15 @@ const UserGuide = () => {
                 </div>
                 <div className="parameter-item">
                   <strong>Bitcoin Price Impact Analysis:</strong>
-                  <p>Line chart showing how Bitcoin price changes (-50% to +50%) affect your LTV ratio, with reference lines for caution and danger thresholds.</p>
+                  <p>Enhanced line chart showing how Bitcoin price changes (-50% to +50%) affect your LTV ratio. Features a <strong>Critical Price Alert</strong> that displays the exact Bitcoin price where your LTV will hit the danger threshold (60%), along with special highlighting for danger intersection points.</p>
                 </div>
                 <div className="parameter-item">
-                  <strong>Liquidation Prices Chart:</strong>
-                  <p>Bar chart displaying liquidation prices at different LTV ratios (25%, 40%, 50%, 60%, 75%, 90%) with current Bitcoin price as reference line.</p>
+                  <strong>Margin Call & Liquidation Table:</strong>
+                  <p>Actionable risk table showing key LTV milestones (70%, 80%, and your custom liquidation threshold) with the Bitcoin price that triggers each level and the exact dollar amount of collateral you'd need to add to restore your original LTV ratio.</p>
                 </div>
                 <div className="parameter-item">
                   <strong>Interactive Features:</strong>
-                  <p>All charts include hover tooltips, formatted values, and reference lines to help identify safe borrowing levels and danger zones.</p>
+                  <p>All charts include hover tooltips, formatted values, and reference lines. The table is color-coded (green/yellow/red) with hover effects and special liquidation badges for easy identification of critical levels.</p>
                 </div>
               </div>
             </div>
@@ -489,10 +516,36 @@ const UserGuide = () => {
                   <li><strong>Bitcoin Price:</strong> $60,000</li>
                   <li><strong>Collateral Value:</strong> $120,000</li>
                   <li><strong>Loan Amount:</strong> $30,000</li>
+                  <li><strong>Liquidation Threshold:</strong> 85% (realistic lending platform)</li>
                   <li><strong>LTV Ratio:</strong> 25% (Safe - Green)</li>
-                  <li><strong>Liquidation Price:</strong> ~$15,000 (75% drop needed)</li>
+                  <li><strong>Liquidation Price:</strong> ~$17,647 (liquidation at 85% LTV)</li>
                 </ul>
-                <p><strong>Analysis:</strong> This is a very safe loan structure with huge downside protection.</p>
+                <p><strong>Analysis:</strong> This is a very safe loan structure. With a realistic 85% liquidation threshold, you still have significant downside protection with Bitcoin needing to drop ~71% before reaching liquidation risk.</p>
+              </div>
+            </div>
+
+            <div className="guide-section">
+              <h3>Understanding the Margin Call Table</h3>
+              <p>
+                The Margin Call & Liquidation Table provides actionable insights for loan management:
+              </p>
+              <div className="parameter-grid">
+                <div className="parameter-item">
+                  <strong>LTV Level Column:</strong>
+                  <p>Shows 70%, 80%, and your custom liquidation threshold. Rows are color-coded: green (safe), yellow (warning), red (danger). Liquidation rows include a red "LIQUIDATION" badge.</p>
+                </div>
+                <div className="parameter-item">
+                  <strong>Bitcoin Price Column:</strong>
+                  <p>The exact Bitcoin price that would trigger each LTV level. This helps you monitor price levels where you might need to take action.</p>
+                </div>
+                <div className="parameter-item">
+                  <strong>Action Required Column:</strong>
+                  <p>The dollar amount of additional collateral you'd need to add to bring your LTV back to your original (safer) level. Shows "No action needed" for safe scenarios or "Add $X,XXX collateral" for risk scenarios.</p>
+                </div>
+                <div className="parameter-item">
+                  <strong>How to Use:</strong>
+                  <p>Monitor Bitcoin price against the table values. If Bitcoin approaches a warning price, consider adding collateral or paying down the loan to maintain a safe LTV ratio.</p>
+                </div>
               </div>
             </div>
 
@@ -501,11 +554,19 @@ const UserGuide = () => {
               <div className="tip-grid">
                 <div className="tip-item success">
                   <strong>✅ Safe Strategy:</strong>
-                  <p>Keep LTV below 30%, monitor liquidation price regularly, have repayment plan ready</p>
+                  <p>Keep LTV below 30%, use realistic liquidation thresholds (80-90%), monitor liquidation price regularly, have repayment plan ready</p>
+                </div>
+                <div className="tip-item success">
+                  <strong>✅ Liquidation Threshold Settings:</strong>
+                  <p>Use 85% as default (matches most platforms), consider 80% for conservative approach, never assume 100% liquidation - it's unrealistic for real lending</p>
                 </div>
                 <div className="tip-item warning">
                   <strong>⚠️ Danger Signs:</strong>
-                  <p>LTV above 50%, liquidation price close to current price, no emergency fund for repayment</p>
+                  <p>LTV above 50%, liquidation price close to current price, no emergency fund for repayment, ignoring margin call table warnings</p>
+                </div>
+                <div className="tip-item warning">
+                  <strong>⚠️ Use the Margin Call Table:</strong>
+                  <p>Monitor Bitcoin price against warning levels, prepare additional collateral before reaching danger zones, act on "Action Required" recommendations promptly</p>
                 </div>
               </div>
             </div>
