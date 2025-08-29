@@ -72,14 +72,15 @@ const UserGuide = () => {
                 <div className="card-icon">🏖️</div>
                 <h3>Retirement Calculator</h3>
                 <p>
-                  Plan your Bitcoin retirement strategy with advanced metrics like Stack/House ratios, 
-                  living expenses, and multiple loan scenarios.
+                  Plan your Bitcoin retirement with two distinct strategies: gradually selling Bitcoin 
+                  or using it as loan collateral to preserve holdings.
                 </p>
                 <ul>
-                  <li>Choose between Traditional and Perpetual Loan strategies</li>
-                  <li>Track Stack/House and Stack/Expenses ratios</li>
-                  <li>Model living expenses and inflation</li>
-                  <li>Simulate perpetual loan cycles for sustainable retirement</li>
+                  <li>Dollar-Cost Averaging (DCA) with monthly contributions during accumulation</li>
+                  <li>Two-phase modeling: Accumulation → Retirement simulation</li>
+                  <li>Choose between "Sell for Income" vs "Borrow for Income" strategies</li>
+                  <li>Customizable retirement duration (10-50 years) for personalized planning</li>
+                  <li>Simplified scenario presets with conditional custom parameters</li>
                 </ul>
                 <div className="card-action">
                   <span className="action-text">Click to open calculator →</span>
@@ -579,78 +580,103 @@ const UserGuide = () => {
             <h2>🏖️ Retirement Calculator Guide</h2>
             
             <div className="guide-section">
-              <h3>Advanced Bitcoin Retirement Planning</h3>
+              <h3>Two-Phase Bitcoin Retirement Planning</h3>
               <p>
-                The Retirement Calculator is our most sophisticated tool, combining Bitcoin growth projections 
-                with real-world expenses, debt management, and wealth ratios to create a comprehensive 
-                retirement strategy.
+                The Retirement Calculator uses a simplified, two-phase approach to model your Bitcoin retirement journey. 
+                It combines Dollar-Cost Averaging during accumulation with strategy-specific retirement simulations 
+                to give you clear insights into your retirement viability.
               </p>
+              
+              <div className="phase-overview">
+                <div className="phase-card">
+                  <h4>📈 Phase 1: Accumulation (Working Years)</h4>
+                  <p>Models how your Bitcoin portfolio grows from now until retirement, including:</p>
+                  <ul>
+                    <li>Initial Bitcoin holdings appreciation</li>
+                    <li>Monthly Dollar-Cost Averaging contributions (optional)</li>
+                    <li>Month-by-month compound growth simulation</li>
+                    <li>Target portfolio calculation based on desired retirement income</li>
+                  </ul>
+                </div>
+                
+                <div className="phase-card">
+                  <h4>🏖️ Phase 2: Retirement (Customizable Duration)</h4>
+                  <p>Simulates your chosen strategy over your selected retirement duration (10-50 years):</p>
+                  <ul>
+                    <li><strong>Sell Strategy:</strong> Shows portfolio depletion as you sell Bitcoin for income</li>
+                    <li><strong>Borrow Strategy:</strong> Shows debt accumulation and LTV risk over time</li>
+                    <li>Inflation-adjusted expenses year by year</li>
+                    <li>Sustainability analysis and risk indicators</li>
+                    <li>Adjustable retirement period to match your life expectancy and planning needs</li>
+                  </ul>
+                </div>
+              </div>
             </div>
 
             <div className="guide-section">
-              <h3>🎯 Strategy Modes</h3>
+              <h3>🎯 Retirement Funding Strategies</h3>
               <p>
-                The Retirement Calculator offers two distinct approaches to Bitcoin retirement planning. 
-                Choose the strategy that best matches your risk tolerance and retirement goals.
+                The calculator asks one key question: <strong>"How do you plan to fund your retirement?"</strong> 
+                Your answer determines the entire retirement phase simulation and chart visualization.
               </p>
               
               <div className="strategy-comparison">
                 <div className="strategy-comparison-grid">
-                  <div className="strategy-comparison-card traditional">
-                    <h4>📈 Traditional Strategy</h4>
-                    <p><strong>Concept:</strong> Hold Bitcoin and potentially sell portions over time for retirement expenses.</p>
+                  <div className="strategy-comparison-card">
+                    <h4>🔽 Sell for Income</h4>
+                    <p><strong>Concept:</strong> Gradually sell Bitcoin during retirement to fund living expenses.</p>
                     <div className="strategy-pros-cons">
                       <div className="pros">
                         <strong>✅ Pros:</strong>
                         <ul>
-                          <li>Simple and straightforward</li>
+                          <li>Simple and straightforward approach</li>
                           <li>No debt risk or liquidation concerns</li>
-                          <li>Full control over your Bitcoin</li>
-                          <li>Tax advantages from long-term holding</li>
+                          <li>Full control over your Bitcoin holdings</li>
+                          <li>Clear depletion timeline for planning</li>
                         </ul>
                       </div>
                       <div className="cons">
                         <strong>❌ Cons:</strong>
                         <ul>
-                          <li>Reduces Bitcoin holdings over time</li>
-                          <li>May miss future appreciation</li>
-                          <li>Timing the market is difficult</li>
-                          <li>Taxable events when selling</li>
+                          <li>Bitcoin holdings decrease over time</li>
+                          <li>Misses potential future appreciation</li>
+                          <li>Creates taxable events when selling</li>
+                          <li>May run out of Bitcoin before death</li>
                         </ul>
                       </div>
                     </div>
                     <div className="ideal-for">
                       <strong>💡 Ideal For:</strong>
-                      <p>Conservative investors, those approaching retirement soon, or anyone wanting simple strategies without debt complexity.</p>
+                      <p>Conservative investors, those wanting predictable cash flow, or anyone preferring debt-free retirement strategies.</p>
                     </div>
                   </div>
                   
-                  <div className="strategy-comparison-card perpetual">
-                    <h4>🔄 Perpetual Loan Strategy</h4>
-                    <p><strong>Concept:</strong> Use Bitcoin as collateral for loans to cover living expenses, preserving your Bitcoin holdings.</p>
+                  <div className="strategy-comparison-card">
+                    <h4>💰 Borrow for Income</h4>
+                    <p><strong>Concept:</strong> Use Bitcoin as collateral for loans while preserving holdings through "loan rollover" cycles.</p>
                     <div className="strategy-pros-cons">
                       <div className="pros">
                         <strong>✅ Pros:</strong>
                         <ul>
-                          <li>Preserves Bitcoin holdings</li>
-                          <li>No taxable events from selling</li>
-                          <li>Benefits from full Bitcoin appreciation</li>
-                          <li>Can be perpetually sustainable</li>
+                          <li>Preserves Bitcoin holdings completely</li>
+                          <li>No taxable selling events</li>
+                          <li>Benefits from continued Bitcoin appreciation</li>
+                          <li>Potentially infinite sustainability</li>
                         </ul>
                       </div>
                       <div className="cons">
                         <strong>❌ Cons:</strong>
                         <ul>
                           <li>Liquidation risk if Bitcoin crashes</li>
-                          <li>Interest payments reduce returns</li>
+                          <li>Compound interest on loans increases debt</li>
                           <li>Complex debt management required</li>
-                          <li>Requires discipline and monitoring</li>
+                          <li>LTV monitoring and risk management needed</li>
                         </ul>
                       </div>
                     </div>
                     <div className="ideal-for">
                       <strong>💡 Ideal For:</strong>
-                      <p>Bitcoin maximalists, young retirees with long time horizons, sophisticated investors comfortable with managed debt risk.</p>
+                      <p>Bitcoin maximalists, long-term believers, sophisticated investors comfortable with managed debt risk.</p>
                     </div>
                   </div>
                 </div>
@@ -658,262 +684,210 @@ const UserGuide = () => {
             </div>
 
             <div className="guide-section">
-              <h3>📋 Traditional Strategy - Step by Step</h3>
+              <h3>📋 Step-by-Step Usage Guide</h3>
               <div className="step-by-step-guide">
                 <div className="step">
-                  <h4>Step 1: Basic Setup</h4>
+                  <h4>Step 1: Choose Your Retirement Strategy</h4>
                   <ul>
-                    <li>Select "Traditional Strategy" mode</li>
-                    <li>Enter your current Bitcoin holdings (e.g., 2.5 BTC)</li>
-                    <li>Set current Bitcoin price (or use refresh button)</li>
-                    <li>Choose projection timeline (10-30 years recommended)</li>
+                    <li>Select <strong>"Sell for Income"</strong> if you plan to gradually sell Bitcoin in retirement</li>
+                    <li>Select <strong>"Borrow for Income"</strong> if you want to use Bitcoin as loan collateral</li>
+                    <li>This choice affects the entire retirement simulation and chart visualization</li>
                   </ul>
                 </div>
                 
                 <div className="step">
-                  <h4>Step 2: Configure Strategy Parameters</h4>
+                  <h4>Step 2: Enter Your Current Situation</h4>
                   <ul>
-                    <li><strong>Annual Growth Rate:</strong> Conservative: 15-25%, Moderate: 25-35%, Aggressive: 35%+</li>
-                    <li><strong>Volatility Factor:</strong> 0.2-0.4 (higher = more year-to-year variation)</li>
-                    <li><strong>Target LTV:</strong> 10-20% (if planning any borrowing)</li>
-                    <li><strong>Cash Out Percentage:</strong> 0-5% of gains per year for expenses</li>
-                    <li><strong>Additional BTC:</strong> Continuing DCA amount per year</li>
+                    <li><strong>Starting Bitcoin Amount:</strong> Your current Bitcoin holdings (e.g., 3.4 BTC)</li>
+                    <li><strong>Current Bitcoin Price:</strong> Use the refresh button for live price or enter manually</li>
+                    <li><strong>Desired Retirement Income:</strong> Annual income needed in today's dollars</li>
+                    <li><strong>Years Until Retirement:</strong> Use the slider to select 5-40 years</li>
+                    <li><strong>Retirement Duration:</strong> Use the slider to select 10-50 years (default: 30 years)</li>
                   </ul>
                 </div>
                 
                 <div className="step">
-                  <h4>Step 3: Living Expenses Planning</h4>
+                  <h4>Step 3: Configure Dollar-Cost Averaging (DCA)</h4>
                   <ul>
-                    <li><strong>Monthly Expenses:</strong> Your current monthly living costs</li>
-                    <li><strong>Cost of Living Increase:</strong> 3-7% annually (inflation + lifestyle)</li>
-                    <li><strong>House Value:</strong> Current home value for Stack/House ratio</li>
-                    <li><strong>House Appreciation:</strong> 3-6% annually</li>
+                    <li><strong>Regular Monthly Contribution:</strong> Dollar amount to invest each month (set to $0 for no DCA)</li>
+                    <li>DCA runs month-by-month simulation: growth → purchase Bitcoin → repeat</li>
+                    <li>Significantly increases final Bitcoin holdings and retirement portfolio size</li>
+                    <li>Example: $1000/month over 20 years can double or triple your final Bitcoin amount</li>
                   </ul>
                 </div>
-
-                <div className="example-scenario">
-                  <h4>💡 Example: Traditional Strategy</h4>
-                  <div className="scenario-details">
-                    <p><strong>Setup:</strong></p>
-                    <ul>
-                      <li>Starting Bitcoin: 1.5 BTC ($90,000 at $60,000/BTC)</li>
-                      <li>Projection: 20 years</li>
-                      <li>Growth Rate: 20% annually</li>
-                      <li>Monthly Expenses: $8,000 ($96,000 annually)</li>
-                      <li>Cash Out: 2% of gains yearly for expenses</li>
-                    </ul>
-                    <p><strong>Expected Outcome:</strong></p>
-                    <ul>
-                      <li>After 20 years: ~0.8 BTC remaining (sold ~0.7 BTC for expenses)</li>
-                      <li>Stack/Expenses Ratio: Still 15-25x (very comfortable)</li>
-                      <li>Total expenses covered: ~$3-4 million over 20 years</li>
-                    </ul>
-                  </div>
+                
+                <div className="step">
+                  <h4>Step 4: Select Economic Scenario</h4>
+                  <ul>
+                    <li><strong>Conservative:</strong> 15% Bitcoin growth, 3% inflation, 6% loan rates</li>
+                    <li><strong>Moderate:</strong> 25% Bitcoin growth, 4% inflation, 8% loan rates</li>
+                    <li><strong>Optimistic:</strong> 35% Bitcoin growth, 3% inflation, 10% loan rates</li>
+                    <li><strong>Custom:</strong> Set your own parameters with strategy-specific fields</li>
+                  </ul>
+                </div>
+                
+                <div className="step">
+                  <h4>Step 5: Interpret Results and Charts</h4>
+                  <ul>
+                    <li><strong>Results Summary:</strong> Required vs projected portfolio, shortfall/surplus, viability</li>
+                    <li><strong>Chart 1 - Accumulation:</strong> Portfolio growth path with target line</li>
+                    <li><strong>Chart 2 - Retirement:</strong> Strategy-specific simulation for your chosen duration</li>
+                    <li>Look for "Strategy Viability (X years)" and "Years Until Depletion/Risk" warnings</li>
+                  </ul>
                 </div>
               </div>
             </div>
 
             <div className="guide-section">
-              <h3>🔄 Perpetual Loan Strategy - Step by Step</h3>
-              <div className="step-by-step-guide">
-                <div className="step">
-                  <h4>Step 1: Basic Setup</h4>
-                  <ul>
-                    <li>Select "Perpetual Loan Strategy" mode</li>
-                    <li>Enter your Bitcoin holdings (minimum 1+ BTC recommended)</li>
-                    <li>Set current Bitcoin price</li>
-                    <li>Choose timeline (20+ years for full analysis)</li>
-                  </ul>
-                </div>
+              <h3>📊 Understanding the Two Charts</h3>
+              
+              <div className="chart-explanation">
+                <h4>📈 Chart 1: Accumulation Phase - Path to Retirement</h4>
+                <ul>
+                  <li>Shows your projected portfolio value from now until retirement</li>
+                  <li>Blue line: Your projected portfolio growth (includes DCA if enabled)</li>
+                  <li>Green dashed line: Required portfolio target for your desired income</li>
+                  <li>Goal: Blue line should meet or exceed the green target line</li>
+                </ul>
                 
-                <div className="step">
-                  <h4>Step 2: Strategy Parameters (Same as Traditional)</h4>
-                  <ul>
-                    <li><strong>Growth Rate:</strong> Be conservative (15-25%) for safety</li>
-                    <li><strong>Interest Rate:</strong> Expected loan rate (6-12%)</li>
-                    <li><strong>Living Expenses:</strong> Accurate monthly/annual costs</li>
-                  </ul>
-                </div>
+                <h4>🏖️ Chart 2: Retirement Phase - Your Custom Duration Simulation</h4>
+                <p>This chart simulates your retirement for the duration you selected (10-50 years).</p>
                 
-                <div className="step">
-                  <h4>Step 3: Perpetual Loan Parameters (Critical Settings)</h4>
-                  <ul>
-                    <li><strong>Expense Coverage by Loans:</strong> 75-100% (how much of expenses to cover via debt)</li>
-                    <li><strong>Target LTV Range Min:</strong> 15-25% (when to take new loans)</li>
-                    <li><strong>Target LTV Range Max:</strong> 30-45% (maximum comfortable debt level)</li>
-                    <li><strong>Emergency Buffer:</strong> 6-12 months of expenses in reserve</li>
-                    <li><strong>Paydown Trigger LTV:</strong> 35-50% (when to aggressively pay down debt)</li>
-                    <li><strong>Stress Test Drawdown:</strong> -50% to -80% (Bitcoin crash scenario)</li>
-                  </ul>
-                </div>
+                <p><strong>For "Sell for Income" Strategy:</strong></p>
+                <ul>
+                  <li>Blue line: Portfolio balance (decreases as you sell Bitcoin)</li>
+                  <li>Orange line: BTC holdings amount (decreases over time)</li>
+                  <li>Both lines trend downward - this is expected and normal</li>
+                  <li>Watch for lines hitting zero before your retirement duration ends</li>
+                </ul>
+                
+                <p><strong>For "Borrow for Income" Strategy:</strong></p>
+                <ul>
+                  <li>Orange line: BTC holdings (stays flat - preserved!)</li>
+                  <li>Red line: Total loan principal (increases over time)</li>
+                  <li>Pink line: LTV ratio (key risk indicator on right axis)</li>
+                  <li>Red dashed line: 75% LTV danger zone (liquidation risk)</li>
+                  <li>Longer durations mean more debt accumulation - watch LTV carefully</li>
+                </ul>
+              </div>
+            </div>
 
-                <div className="step">
-                  <h4>Step 4: Interpret Results</h4>
-                  <ul>
-                    <li><strong>Years of Sustainability:</strong> Should be 20+ years, ideally "Sustainable"</li>
-                    <li><strong>Average LTV:</strong> Should stay below 40% for safety</li>
-                    <li><strong>Total Expenses Covered:</strong> How much you can live off loans</li>
-                    <li><strong>Final BTC Holdings:</strong> Should be close to starting amount</li>
-                  </ul>
+            <div className="guide-section">
+              <h3>⏱️ Customizable Retirement Duration</h3>
+              <p>
+                The calculator now features a <strong>Retirement Duration slider</strong> that allows you to customize how long your retirement period will be. 
+                This is crucial for accurate planning based on your life expectancy and personal circumstances.
+              </p>
+              
+              <div className="feature-list">
+                <div className="parameter-item">
+                  <strong>Range:</strong>
+                  <p>10 to 50 years, with a default of 30 years</p>
                 </div>
-
-                <div className="example-scenario">
-                  <h4>💡 Example: Perpetual Loan Strategy</h4>
-                  <div className="scenario-details">
-                    <p><strong>Setup:</strong></p>
-                    <ul>
-                      <li>Starting Bitcoin: 3.0 BTC ($180,000 at $60,000/BTC)</li>
-                      <li>Annual Expenses: $120,000</li>
-                      <li>Expense Coverage: 100% (cover all expenses via loans)</li>
-                      <li>LTV Range: 20-40%</li>
-                      <li>Bitcoin Growth: 20% annually</li>
-                      <li>Loan Interest: 8%</li>
-                    </ul>
-                    <p><strong>How It Works Year by Year:</strong></p>
-                    <ul>
-                      <li><strong>Year 1:</strong> Take $120k loan (67% LTV → too high, reduce)</li>
-                      <li><strong>Year 2:</strong> Bitcoin grows to $216k, LTV drops to 56%, take new loan</li>
-                      <li><strong>Year 5:</strong> Bitcoin worth $450k, pay down debt, maintain 25-35% LTV</li>
-                      <li><strong>Year 10:</strong> Bitcoin worth $1.1M, easily sustainable at 20% LTV</li>
-                    </ul>
-                    <p><strong>Expected Outcome:</strong></p>
-                    <ul>
-                      <li>After 20 years: Still own ~2.8-3.0 BTC (minimal Bitcoin sold)</li>
-                      <li>Total debt: $300-500k (manageable vs $5M+ Bitcoin value)</li>
-                      <li>Living expenses covered: $2.4M over 20 years via loans</li>
-                      <li>Result: Lived comfortably while preserving Bitcoin stack</li>
-                    </ul>
-                  </div>
+                <div className="parameter-item">
+                  <strong>Why It Matters:</strong>
+                  <p>Different retirement durations require different portfolio sizes and strategies. A 20-year retirement has very different requirements than a 40-year retirement.</p>
+                </div>
+                <div className="parameter-item">
+                  <strong>Impact on Calculations:</strong>
+                  <p>Both "Sell for Income" and "Borrow for Income" strategies adjust their simulations based on your selected duration. Longer durations require more conservative approaches.</p>
+                </div>
+                <div className="parameter-item">
+                  <strong>Choosing Your Duration:</strong>
+                  <ul>
+                    <li>Early retirement (age 40-50): Consider 40-50 years</li>
+                    <li>Standard retirement (age 60-65): Consider 25-35 years</li>
+                    <li>Late retirement (age 70+): Consider 15-25 years</li>
+                  </ul>
                 </div>
               </div>
             </div>
 
             <div className="guide-section">
-              <h3>⚠️ Risk Management & Warnings</h3>
+              <h3>🚨 Custom Parameters by Strategy</h3>
+              <p>When you select "Custom" scenario, the input fields change based on your chosen strategy:</p>
+              
+              <div className="custom-params-explanation">
+                <h4>🔽 Sell for Income - Custom Fields:</h4>
+                <ul>
+                  <li><strong>Withdrawal Rate:</strong> Percentage of portfolio to withdraw annually (3-5% typical)</li>
+                  <li>This determines how much of your Bitcoin you sell each year</li>
+                  <li>Lower rates = portfolio lasts longer, higher rates = more income but faster depletion</li>
+                </ul>
+                
+                <h4>💰 Borrow for Income - Custom Fields:</h4>
+                <ul>
+                  <li><strong>Target Annual LTV:</strong> Desired loan-to-value ratio (15-35% typical)</li>
+                  <li>This controls how much debt you take on relative to your Bitcoin value</li>
+                  <li>Lower LTV = safer but less income, higher LTV = more income but riskier</li>
+                </ul>
+              </div>
+            </div>
+
+            <div className="guide-section">
+              <h3>💡 Example Scenarios</h3>
+              
+              <div className="example-scenario">
+                <h4>🔽 Example: Sell for Income Strategy</h4>
+                <div className="scenario-details">
+                  <p><strong>Setup:</strong></p>
+                  <ul>
+                    <li>Starting: 2.0 BTC at $50,000 = $100,000</li>
+                    <li>Monthly DCA: $500 for 20 years</li>
+                    <li>Retirement Duration: 35 years (age 60 to 95)</li>
+                    <li>Desired Income: $80,000/year</li>
+                    <li>Scenario: Moderate (25% growth, 4% withdrawal)</li>
+                  </ul>
+                  <p><strong>Results After DCA:</strong></p>
+                  <ul>
+                    <li>Total Bitcoin at retirement: ~5.2 BTC</li>
+                    <li>Portfolio value: ~$1.6 million</li>
+                    <li>Required portfolio: $2 million (4% withdrawal rate)</li>
+                    <li>35-year sustainability check shows depletion risk at year 28</li>
+                    <li>Solution: Increase DCA or extend accumulation period</li>
+                  </ul>
+                </div>
+              </div>
+              
+              <div className="example-scenario">
+                <h4>💰 Example: Borrow for Income Strategy</h4>
+                <div className="scenario-details">
+                  <p><strong>Setup:</strong></p>
+                  <ul>
+                    <li>Starting: 3.0 BTC at $60,000 = $180,000</li>
+                    <li>Monthly DCA: $1000 for 15 years</li>
+                    <li>Retirement Duration: 40 years (early retirement scenario)</li>
+                    <li>Desired Income: $120,000/year</li>
+                    <li>Scenario: Moderate (25% growth, 25% target LTV)</li>
+                  </ul>
+                  <p><strong>Impact of 40-Year Duration:</strong></p>
+                  <ul>
+                    <li>Longer duration means more total debt accumulation</li>
+                    <li>LTV ratio becomes critical after year 25</li>
+                    <li>Requires more conservative initial LTV targets</li>
+                    <li>Bitcoin growth must consistently outpace loan interest over 40 years</li>
+                    <li>Consider reducing annual income or increasing initial BTC holdings</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <div className="guide-section">
+              <h3>⚠️ Important Considerations</h3>
               <div className="warning-grid">
                 <div className="warning-item critical">
-                  <strong>🚨 Critical Warnings for Perpetual Loan Strategy:</strong>
-                  <ul>
-                    <li>Only use with 2+ BTC minimum (smaller amounts too risky)</li>
-                    <li>Never exceed 50% LTV - liquidation risk becomes severe</li>
-                    <li>Have emergency fund outside of Bitcoin for loan payments</li>
-                    <li>Monitor Bitcoin price and LTV ratio weekly during retirement</li>
-                    <li>Be prepared to pay down debt aggressively during bear markets</li>
-                  </ul>
+                  <strong>⚠️ This is a Planning Tool Only</strong>
+                  <p>These projections are hypothetical. Bitcoin prices are highly volatile and unpredictable. Past performance does not guarantee future results.</p>
                 </div>
                 
                 <div className="warning-item moderate">
-                  <strong>⚠️ When NOT to Use Perpetual Loan Strategy:</strong>
-                  <ul>
-                    <li>Less than 2 BTC holdings</li>
-                    <li>Risk-averse personality</li>
-                    <li>Unable to monitor and manage debt actively</li>
-                    <li>Expecting to need large lump sums (medical, emergencies)</li>
-                    <li>Unstable income or high expense variability</li>
-                  </ul>
+                  <strong>📊 Conservative Assumptions Recommended</strong>
+                  <p>Use conservative growth rates and higher safety margins. Better to be pleasantly surprised than financially unprepared.</p>
                 </div>
                 
                 <div className="warning-item success">
-                  <strong>✅ Signs Your Strategy is Working:</strong>
-                  <ul>
-                    <li>LTV stays consistently below 40%</li>
-                    <li>Bitcoin holdings remain stable or growing</li>
-                    <li>Debt payments covered by Bitcoin appreciation</li>
-                    <li>Stack/Expenses ratio improving over time</li>
-                    <li>No stress during 20-30% Bitcoin corrections</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-
-            <div className="guide-section">
-              <h3>Key Metrics Explained</h3>
-              
-              <div className="metric-explanation">
-                <h4>📊 Stack/House Ratio</h4>
-                <p>
-                  Compares your Bitcoin value to house value. This ratio helps you understand your wealth 
-                  in familiar terms - "How many houses could I buy with my Bitcoin?"
-                </p>
-                <ul>
-                  <li><strong>100%:</strong> Your Bitcoin equals your house value</li>
-                  <li><strong>200%:</strong> You could buy 2 houses with your Bitcoin</li>
-                  <li><strong>500%:</strong> Your Bitcoin is worth 5 houses - significant wealth</li>
-                </ul>
-              </div>
-
-              <div className="metric-explanation">
-                <h4>💰 Stack/Expenses Ratio</h4>
-                <p>
-                  Shows how many years of living expenses your Bitcoin covers. This is crucial for 
-                  retirement planning and financial independence.
-                </p>
-                <ul>
-                  <li><strong>10x:</strong> 10 years of expenses covered</li>
-                  <li><strong>25x:</strong> Traditional "safe withdrawal rate" threshold</li>
-                  <li><strong>50x+:</strong> Very comfortable retirement position</li>
-                </ul>
-              </div>
-
-              <div className="metric-explanation">
-                <h4>⚠️ Liquidation Price</h4>
-                <p>
-                  The Bitcoin price at which your loans become risky (with 25% safety buffer). 
-                  This helps you monitor debt safety throughout your retirement plan.
-                </p>
-              </div>
-            </div>
-
-            <div className="guide-section">
-              <h3>LTV Scenarios Explained</h3>
-              <p>
-                The calculator shows four loan scenarios (5%, 10%, 15%, 20% of your Bitcoin as collateral) 
-                to help you understand different borrowing strategies:
-              </p>
-              <div className="scenario-explanation-grid">
-                <div className="scenario-explanation">
-                  <strong>5% Collateral:</strong> Ultra-conservative borrowing
-                </div>
-                <div className="scenario-explanation">
-                  <strong>10% Collateral:</strong> Conservative borrowing for major expenses
-                </div>
-                <div className="scenario-explanation">
-                  <strong>15% Collateral:</strong> Moderate borrowing for investments
-                </div>
-                <div className="scenario-explanation">
-                  <strong>20% Collateral:</strong> Aggressive borrowing strategy
-                </div>
-              </div>
-            </div>
-
-            <div className="guide-section">
-              <h3>How to Use the Calculator</h3>
-              <ol>
-                <li><strong>Set Your Bitcoin Holdings:</strong> Enter your current or target Bitcoin amount</li>
-                <li><strong>Configure Growth Parameters:</strong> Use realistic annual growth rates (20-50%)</li>
-                <li><strong>Input Living Expenses:</strong> Your monthly/annual spending with inflation adjustments</li>
-                <li><strong>Set House Value:</strong> For Stack/House ratio calculations and wealth benchmarking</li>
-                <li><strong>Configure Loan Strategy:</strong> Set target LTV ratios and interest rates</li>
-                <li><strong>Analyze Results:</strong> Focus on Stack/Expenses ratio and risk indicators</li>
-              </ol>
-            </div>
-
-            <div className="guide-section">
-              <h3>Reading the Results</h3>
-              <div className="results-guide-grid">
-                <div className="result-guide-item">
-                  <h4>📊 Charts</h4>
-                  <ul>
-                    <li>Wealth Growth: Shows total value vs. net worth over time</li>
-                    <li>Ratios & Risk: Tracks key metrics and safety levels</li>
-                  </ul>
-                </div>
-                <div className="result-guide-item">
-                  <h4>📋 Table</h4>
-                  <ul>
-                    <li>Color coding: Green (safe), Yellow (caution), Red (danger)</li>
-                    <li>Key columns: Stack/House, Stack/Expenses, Liquidation Price</li>
-                  </ul>
+                  <strong>🔄 Regular Review Essential</strong>
+                  <p>Review and adjust your strategy regularly based on actual Bitcoin performance, life changes, and market conditions.</p>
                 </div>
               </div>
             </div>

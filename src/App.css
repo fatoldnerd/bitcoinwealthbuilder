@@ -2027,3 +2027,194 @@ body {
     min-width: auto;
   }
 }
+
+/* Refactored Retirement Calculator Styles */
+
+/* Core inputs section */
+.core-inputs-section {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding: 1.5rem;
+  background-color: #2A2A2A;
+  border-radius: 12px;
+  border: 1px solid #444;
+}
+
+/* Years until retirement slider styling */
+.form-slider {
+  width: 100%;
+  height: 8px;
+  border-radius: 5px;
+  background: linear-gradient(to right, #28a745, #ffc107, #dc3545);
+  outline: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+}
+
+.form-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #007BFF;
+  cursor: pointer;
+  border: 3px solid #1E1E1E;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.form-slider::-moz-range-thumb {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #007BFF;
+  cursor: pointer;
+  border: 3px solid #1E1E1E;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+/* Contribution Plan section */
+.contribution-plan-section {
+  background-color: #252525;
+  border-radius: 10px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  border: 2px solid #28a745;
+}
+
+/* Scenario section */
+.scenario-section {
+  background-color: #252525;
+  border-radius: 10px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid #333;
+}
+
+.scenario-display {
+  background-color: #1E1E1E;
+  padding: 1rem;
+  border-radius: 8px;
+  border: 1px solid #444;
+}
+
+.scenario-display h4 {
+  color: #FF8C00;
+  margin: 0 0 0.75rem 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.assumptions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: #B0B0B0;
+}
+
+.assumptions-grid > div {
+  padding: 0.5rem;
+  background-color: #2A2A2A;
+  border-radius: 4px;
+  border: 1px solid #333;
+}
+
+/* Custom parameters section */
+.custom-params-section {
+  background-color: #252525;
+  border-radius: 10px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  border: 2px solid #007BFF;
+}
+
+.custom-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.custom-item {
+  background-color: #1E1E1E;
+  padding: 1rem;
+  border-radius: 8px;
+  border: 1px solid #333;
+}
+
+.custom-item label {
+  font-size: 0.9rem;
+  color: #EAEAEA;
+  margin-bottom: 0.5rem;
+  display: block;
+  font-weight: 500;
+}
+
+.custom-input {
+  width: 100%;
+  padding: 0.5rem;
+  border: 2px solid #333;
+  border-radius: 6px;
+  background-color: #2A2A2A;
+  color: #EAEAEA;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+
+.custom-input:focus {
+  outline: none;
+  border-color: #007BFF;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+/* Chart-specific styling for retirement calculator */
+.chart-container .chart-title {
+  text-align: left;
+  color: #FF8C00;
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  border-bottom: 2px solid #444;
+  padding-bottom: 0.5rem;
+}
+
+/* Enhanced results styling for retirement calculator */
+.results-container .results-title {
+  text-align: center;
+  font-size: 1.4rem;
+  margin-bottom: 1.5rem;
+  color: #FF8C00;
+  border-bottom: 2px solid #444;
+  padding-bottom: 0.5rem;
+}
+
+.result-value.safe {
+  color: #28a745;
+  font-weight: 600;
+}
+
+.result-value.danger {
+  color: #dc3545;
+  font-weight: 600;
+}
+
+/* Mobile responsiveness for new retirement calculator */
+@media (max-width: 768px) {
+  .core-inputs-section {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    padding: 1rem;
+  }
+
+  .assumptions-grid {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+
+  .custom-grid {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+}

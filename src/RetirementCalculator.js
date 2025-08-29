@@ -1,59 +1,80 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, ReferenceLine, AreaChart, Area } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, ReferenceLine } from 'recharts';
 
 const RetirementCalculator = () => {
-  // State for input values
-  const [startingBTC, setStartingBTC] = useState('3.4');
-  const [bitcoinPrice, setBitcoinPrice] = useState('');
-  const [isLoadingPrice, setIsLoadingPrice] = useState(false);
+  // Core input values - simplified to essential parameters only
+  const [startingBTC, setStartingBTC] = useState('3.4'); // User's current Bitcoin holdings
+  const [bitcoinPrice, setBitcoinPrice] = useState(''); // Current Bitcoin price (fetched from API)
+  const [isLoadingPrice, setIsLoadingPrice] = useState(false); // Loading state for price fetch
+  const [yearsUntilRetirement, setYearsUntilRetirement] = useState(20); // Replaced age inputs with direct years
+  const [retirementDuration, setRetirementDuration] = useState(30); // Customizable retirement period duration
+  const [desiredRetirementIncome, setDesiredRetirementIncome] = useState(120000); // Annual income needed in retirement
+  const [monthlyContribution, setMonthlyContribution] = useState(0); // Dollar-cost averaging monthly contribution
   
-  // Strategy parameters
-  const [strategyParams, setStrategyParams] = useState({
-    projectionYears: 20,
-    annualGrowthRate: 25, // Average annual Bitcoin growth
-    volatilityFactor: 0.3, // How much year-to-year variation
-    ltvTarget: 15, // Target LTV ratio
-    maxLtv: 25, // Maximum LTV allowed
-    interestRate: 8, // Loan interest rate
-    rebalanceFrequency: 'yearly', // How often to rebalance
-    cashOutPercentage: 0, // Percentage to cash out annually
-    additionalBTC: 0, // Additional BTC purchased annually
-  });
-
-  // Living expenses and house parameters
-  const [livingParams, setLivingParams] = useState({
-    monthlyExpenses: 10000, // Monthly living expenses
-    annualExpenses: 120000, // Annual expenses (auto-calculated)
-    costOfLivingIncrease: 5, // Annual cost increase %
-    houseValue: 300000, // Current house value
-    houseAppreciation: 5, // Annual house appreciation %
-  });
+  // Scenario selector state - controls all rate-based assumptions
+  const [selectedScenario, setSelectedScenario] = useState('moderate');
   
-  // Strategy mode state
-  const [strategyMode, setStrategyMode] = useState('traditional'); // 'traditional' or 'perpetual'
+  // Top-level strategy selector - primary choice between sell vs borrow for retirement funding
+  const [retirementStrategy, setRetirementStrategy] = useState('sell'); // 'sell' or 'borrow'
   
-  // Perpetual loan strategy parameters
-  const [perpetualParams, setPerpetualParams] = useState({
-    expenseCoveragePercent: 100, // % of expenses covered by loans
-    targetLtvMin: 20, // Minimum target LTV
-    targetLtvMax: 40, // Maximum target LTV
-    emergencyBufferMonths: 6, // Months of expenses in reserve
-    paydownTriggerLtv: 35, // LTV level that triggers loan paydown
-    stressTestDrawdown: -50, // Stress test drawdown percentage
-  });
+  // Predefined scenario assumptions - bundles all the complex rate parameters
+  const scenarios = {
+    conservative: {
+      inflationRate: 3,
+      bitcoinGrowthRate: 15,
+      withdrawalRate: 3.5,
+      loanInterestRate: 6,
+      postRetirementBitcoinGrowth: 8,
+      targetAnnualLTV: 15
+    },
+    moderate: {
+      inflationRate: 4,
+      bitcoinGrowthRate: 25,
+      withdrawalRate: 4,
+      loanInterestRate: 8,
+      postRetirementBitcoinGrowth: 12,
+      targetAnnualLTV: 25
+    },
+    optimistic: {
+      inflationRate: 3,
+      bitcoinGrowthRate: 35,
+      withdrawalRate: 5,
+      loanInterestRate: 10,
+      postRetirementBitcoinGrowth: 20,
+      targetAnnualLTV: 35
+    },
+    custom: {
+      inflationRate: 4,
+      bitcoinGrowthRate: 25,
+      withdrawalRate: 4,
+      loanInterestRate: 8,
+      postRetirementBitcoinGrowth: 12,
+      targetAnnualLTV: 25
+    }
+  };
   
-  // State for calculated results
+  // Custom scenario parameters (only visible when custom is selected)
+  const [customParams, setCustomParams] = useState(scenarios.custom);
+  
+  // Chart data states for the two distinct phases
+  const [accumulationData, setAccumulationData] = useState([]); // Phase 1: Growth to retirement
+  const [retirementData, setRetirementData] = useState([]); // Phase 2: 30-year retirement simulation
   const [results, setResults] = useState(null);
-  const [yearlyData, setYearlyData] = useState([]);
-  const [chartData, setChartData] = useState([]);
-  const [ratioData, setRatioData] = useState([]);
-  const [loanData, setLoanData] = useState([]);
 
   // Fetch Bitcoin price from CoinGecko API on component mount
   useEffect(() => {
     fetchBitcoinPrice();
   }, []);
+
+  // Clear results when key parameters change so user knows to recalculate
+  useEffect(() => {
+    if (results) {
+      setResults(null);
+      setAccumulationData([]);
+      setRetirementData([]);
+    }
+  }, [retirementStrategy, selectedScenario, monthlyContribution]);
 
   const fetchBitcoinPrice = async () => {
     setIsLoadingPrice(true);
@@ -70,9 +91,14 @@ const RetirementCalculator = () => {
       setIsLoadingPrice(false);
     }
   };
+  
+  // Get current scenario assumptions - helper function
+  const getCurrentAssumptions = () => {
+    return selectedScenario === 'custom' ? customParams : scenarios[selectedScenario];
+  };
 
-  // Generate realistic Bitcoin price movements
-  const generateBitcoinPrices = (startPrice, years, growthRate, volatility) => {
+  // Generate Bitcoin price projection with compound growth (simplified, no volatility)
+  const generateBitcoinPrices = (startPrice, years, annualGrowthRate) => {
     const prices = [];
     let currentPrice = startPrice;
     
@@ -82,360 +108,214 @@ const RetirementCalculator = () => {
         continue;
       }
       
-      // Generate random growth with volatility
-      const baseGrowth = growthRate / 100;
-      const volatilityRange = volatility * 2; // ±volatility%
-      const randomFactor = (Math.random() - 0.5) * volatilityRange;
-      const yearGrowth = baseGrowth + randomFactor;
-      
-      currentPrice = currentPrice * (1 + yearGrowth);
+      // Simple compound growth for cleaner projections
+      currentPrice = currentPrice * (1 + annualGrowthRate / 100);
       prices.push(Math.round(currentPrice));
     }
     
     return prices;
   };
 
-  // Calculate perpetual loan strategy
-  const calculatePerpetualLoanStrategy = () => {
-    const btc = parseFloat(startingBTC) || 0;
-    const startPrice = parseFloat(bitcoinPrice) || 0;
-    const years = parseInt(strategyParams.projectionYears) || 20;
-    
-    if (btc <= 0 || startPrice <= 0) {
-      alert('Please enter valid Bitcoin amount and price');
-      return;
-    }
-
-    const prices = generateBitcoinPrices(
-      startPrice, 
-      years, 
-      strategyParams.annualGrowthRate, 
-      strategyParams.volatilityFactor
-    );
-
-    const loanProjection = [];
-    let currentBTC = btc;
-    let totalOutstandingDebt = 0;
-    let totalInterestPaid = 0;
-    let totalExpensesCovered = 0;
-    let currentHouseValue = livingParams.houseValue;
-    let currentAnnualExpenses = livingParams.annualExpenses;
-    let liquidationYear = null;
-
-    for (let year = 0; year <= years; year++) {
-      const currentPrice = prices[year];
-      const currentValue = currentBTC * currentPrice;
-      
-      // Update expenses and house value
-      if (year > 0) {
-        currentAnnualExpenses *= (1 + livingParams.costOfLivingIncrease / 100);
-        currentHouseValue *= (1 + livingParams.houseAppreciation / 100);
-      }
-
-      // Calculate current LTV
-      const currentLTV = currentValue > 0 ? (totalOutstandingDebt / currentValue) * 100 : 0;
-
-      // Calculate this year's expenses to be covered by loan
-      const expensesToCover = currentAnnualExpenses * (perpetualParams.expenseCoveragePercent / 100);
-      let newLoanAmount = 0;
-      let loanPaydown = 0;
-      let annualInterest = 0;
-
-      if (year > 0) {
-        // Calculate interest on existing debt
-        annualInterest = totalOutstandingDebt * (strategyParams.interestRate / 100);
-        totalInterestPaid += annualInterest;
-        totalOutstandingDebt += annualInterest; // Add interest to debt
-
-        // Determine if we should take new loan or pay down debt
-        if (currentLTV < perpetualParams.targetLtvMin) {
-          // LTV is low - can take new loan for expenses
-          newLoanAmount = Math.min(
-            expensesToCover,
-            (currentValue * (perpetualParams.targetLtvMax / 100)) - totalOutstandingDebt
-          );
-          
-          if (newLoanAmount > 0) {
-            totalOutstandingDebt += newLoanAmount;
-            totalExpensesCovered += newLoanAmount;
-          }
-        } else if (currentLTV > perpetualParams.paydownTriggerLtv) {
-          // LTV is too high - pay down debt instead of taking new loan
-          const targetDebt = currentValue * (perpetualParams.targetLtvMin / 100);
-          loanPaydown = Math.max(0, totalOutstandingDebt - targetDebt);
-          
-          // Can only pay down what we have in BTC appreciation
-          const availableForPaydown = currentValue * 0.1; // Max 10% of portfolio value
-          loanPaydown = Math.min(loanPaydown, availableForPaydown);
-          
-          totalOutstandingDebt = Math.max(0, totalOutstandingDebt - loanPaydown);
-          
-          // Reduce BTC holdings to pay down loan
-          const btcUsedForPaydown = loanPaydown / currentPrice;
-          currentBTC = Math.max(0, currentBTC - btcUsedForPaydown);
-        }
-
-        // Check for liquidation risk
-        if (currentLTV > 75 && !liquidationYear) {
-          liquidationYear = year;
-        }
-      }
-
-      // Calculate metrics
-      const stackHouseRatio = currentValue / currentHouseValue;
-      const stackExpensesRatio = currentValue / currentAnnualExpenses;
-      const debtServiceRatio = totalOutstandingDebt > 0 ? (annualInterest / (currentValue * 0.2)) : 0;
-      const availableCreditLine = Math.max(0, (currentValue * (perpetualParams.targetLtvMax / 100)) - totalOutstandingDebt);
-
-      loanProjection.push({
-        year,
-        price: currentPrice,
-        btcHoldings: currentBTC,
-        value: currentValue,
-        expenses: currentAnnualExpenses,
-        houseValue: currentHouseValue,
-        stackHouseRatio: stackHouseRatio,
-        stackExpensesRatio: stackExpensesRatio,
-        newLoanAmount,
-        loanPaydown,
-        totalOutstandingDebt,
-        currentLTV,
-        annualInterest,
-        debtServiceRatio,
-        availableCreditLine,
-        expensesCovered: year === 0 ? 0 : (newLoanAmount > 0 ? newLoanAmount : 0),
-        sustainabilityScore: currentLTV < 30 ? 'Excellent' : currentLTV < 50 ? 'Good' : currentLTV < 70 ? 'Risky' : 'Danger'
-      });
-    }
-
-    setLoanData(loanProjection);
-    
-    // Set summary results
-    setResults({
-      finalBTC: currentBTC.toFixed(8),
-      finalValue: (currentBTC * prices[years]).toFixed(2),
-      totalDebt: totalOutstandingDebt.toFixed(2),
-      totalInterestPaid: totalInterestPaid.toFixed(2),
-      totalExpensesCovered: totalExpensesCovered.toFixed(2),
-      finalLTV: loanProjection[years].currentLTV.toFixed(1),
-      liquidationYear: liquidationYear,
-      yearsOfSustainability: liquidationYear ? liquidationYear : years,
-      averageLTV: (loanProjection.slice(1).reduce((sum, year) => sum + year.currentLTV, 0) / years).toFixed(1)
-    });
+  // Calculate required retirement portfolio based on desired income and withdrawal rate
+  const calculateRequiredRetirementPortfolio = () => {
+    const assumptions = getCurrentAssumptions();
+    return desiredRetirementIncome / (assumptions.withdrawalRate / 100);
   };
 
-  // Calculate year-by-year projections
+  // Main calculation function - orchestrates both phases of retirement planning
   const calculateRetirementProjection = () => {
     const btc = parseFloat(startingBTC) || 0;
     const startPrice = parseFloat(bitcoinPrice) || 0;
-    const years = parseInt(strategyParams.projectionYears) || 20;
     
     if (btc <= 0 || startPrice <= 0) {
       alert('Please enter valid Bitcoin amount and price');
       return;
     }
-
-    const prices = generateBitcoinPrices(
-      startPrice, 
-      years, 
-      strategyParams.annualGrowthRate, 
-      strategyParams.volatilityFactor
+    
+    const assumptions = getCurrentAssumptions();
+    const requiredPortfolio = calculateRequiredRetirementPortfolio();
+    
+    // Phase 1: Accumulation Phase (working years until retirement)
+    const accumulationPhase = calculateAccumulationPhase(btc, startPrice, assumptions, requiredPortfolio);
+    
+    // Phase 2: Retirement Phase (customizable duration after retirement with strategy-specific logic)
+    const retirementPhase = calculateRetirementPhase(
+      accumulationPhase.finalBTC, 
+      accumulationPhase.finalPrice, 
+      assumptions,
+      retirementDuration
     );
-
-    const yearlyProjection = [];
-    const ratioProjection = [];
-    let currentBTC = btc;
-    let totalDebt = 0;
-    let totalInterestPaid = 0;
-    let totalCashOut = 0;
-    let totalAdditionalBTC = 0;
-    let currentHouseValue = livingParams.houseValue;
-    let currentAnnualExpenses = livingParams.annualExpenses;
-
-    for (let year = 0; year <= years; year++) {
-      const currentPrice = prices[year];
-      const currentValue = currentBTC * currentPrice;
-      
-      // Update living expenses and house value for this year
-      if (year > 0) {
-        currentAnnualExpenses *= (1 + livingParams.costOfLivingIncrease / 100);
-        currentHouseValue *= (1 + livingParams.houseAppreciation / 100);
-      }
-      
-      const monthlyExpenses = currentAnnualExpenses / 12;
-      const btcMonthlyExpenses = monthlyExpenses / currentPrice;
-      const btcAnnualExpenses = currentAnnualExpenses / currentPrice;
-      
-      // Calculate year-over-year changes
-      let gainPercent = 0;
-      let gainDollars = 0;
-      
-      if (year > 0) {
-        const prevValue = yearlyProjection[year - 1].value;
-        gainDollars = currentValue - prevValue;
-        gainPercent = prevValue > 0 ? (gainDollars / prevValue) * 100 : 0;
-      }
-
-      // Calculate leverage and debt
-      let targetLTV = strategyParams.ltvTarget;
-      let maxLTV = strategyParams.maxLtv;
-      
-      // Adjust LTV based on market conditions
-      if (gainPercent > 50) {
-        targetLTV = Math.min(targetLTV + 5, maxLTV); // Increase leverage in bull markets
-      } else if (gainPercent < -20) {
-        targetLTV = Math.max(targetLTV - 10, 5); // Reduce leverage in bear markets
-      }
-
-      const targetDebt = currentValue * (targetLTV / 100);
-      const debtChange = targetDebt - totalDebt;
-      
-      // Calculate interest on existing debt
-      const annualInterest = totalDebt * (strategyParams.interestRate / 100);
-      totalInterestPaid += annualInterest;
-      
-      // Update debt
-      if (debtChange > 0) {
-        totalDebt += debtChange;
-      } else if (debtChange < 0) {
-        totalDebt = Math.max(0, totalDebt + debtChange);
-      }
-
-      // Calculate cash flow
-      let freeCashFlow = 0;
-      let cashOutAmount = 0;
-      let additionalBTCAmount = 0;
-
-      if (year > 0) {
-        // Cash out percentage of gains
-        if (strategyParams.cashOutPercentage > 0 && gainDollars > 0) {
-          cashOutAmount = gainDollars * (strategyParams.cashOutPercentage / 100);
-          totalCashOut += cashOutAmount;
-        }
-
-        // Purchase additional BTC
-        if (strategyParams.additionalBTC > 0) {
-          additionalBTCAmount = strategyParams.additionalBTC * currentPrice;
-          currentBTC += strategyParams.additionalBTC;
-          totalAdditionalBTC += strategyParams.additionalBTC;
-        }
-
-        // Calculate free cash flow
-        freeCashFlow = gainDollars - annualInterest - cashOutAmount - additionalBTCAmount;
-      }
-
-      // Calculate net worth and key ratios
-      const netWorth = currentValue - totalDebt;
-      const stackHouseRatio = (currentValue / currentHouseValue) * 100;
-      const stackExpensesRatio = currentValue / currentAnnualExpenses;
-      const liquidationPrice = totalDebt > 0 ? (totalDebt / currentBTC) * 1.25 : 0; // 25% safety margin
-      
-      yearlyProjection.push({
-        year: year,
-        calendarYear: 2024 + year,
-        value: Math.round(currentValue),
-        gainPercent: Math.round(gainPercent * 100) / 100,
-        gainDollars: Math.round(gainDollars),
-        ltv: Math.round((totalDebt / currentValue) * 100 * 100) / 100,
-        debt: Math.round(totalDebt),
-        interest: Math.round(annualInterest),
-        fcf: Math.round(freeCashFlow),
-        netWorth: Math.round(netWorth),
-        btcPrice: Math.round(currentPrice),
-        btcAmount: Math.round(currentBTC * 1000000) / 1000000,
-        cashOut: Math.round(cashOutAmount),
-        additionalBTC: Math.round(additionalBTCAmount),
-        // New metrics from spreadsheets
-        houseValue: Math.round(currentHouseValue),
-        annualExpenses: Math.round(currentAnnualExpenses),
-        monthlyExpenses: Math.round(monthlyExpenses),
-        btcMonthlyExpenses: Math.round(btcMonthlyExpenses * 100000000) / 100000000,
-        stackHouseRatio: Math.round(stackHouseRatio * 100) / 100,
-        stackExpensesRatio: Math.round(stackExpensesRatio * 100) / 100,
-        liquidationPrice: Math.round(liquidationPrice)
-      });
-      
-      // Store ratio data for additional charts
-      ratioProjection.push({
-        year: 2024 + year,
-        stackHouseRatio: stackHouseRatio,
-        stackExpensesRatio: stackExpensesRatio,
-        ltv: (totalDebt / currentValue) * 100,
-        liquidationPrice: liquidationPrice,
-        currentPrice: currentPrice
-      });
-    }
-
-    // Calculate totals and LTV scenarios
-    const finalValue = yearlyProjection[yearlyProjection.length - 1].value;
-    const totalGain = finalValue - yearlyProjection[0].value;
-    const finalNetWorth = yearlyProjection[yearlyProjection.length - 1].netWorth;
-    const finalBTCPrice = prices[prices.length - 1];
     
-    // Calculate 50% LTV scenarios at different collateral percentages (like spreadsheet)
-    const ltvScenarios = [5, 10, 15, 20].map(collateralPercent => {
-      const collateralValue = finalValue * (collateralPercent / 100);
-      const loanAmount = collateralValue * 0.5; // 50% LTV
-      return {
-        collateralPercent,
-        collateralValue: Math.round(collateralValue),
-        loanAmount: Math.round(loanAmount),
-        annualInterest: Math.round(loanAmount * (strategyParams.interestRate / 100))
-      };
-    });
-
+    setAccumulationData(accumulationPhase.data);
+    setRetirementData(retirementPhase.data);
+    
+    // Set comprehensive results for display
     setResults({
-      startingValue: yearlyProjection[0].value,
-      finalValue: finalValue,
-      totalGain: totalGain,
-      totalGainPercent: ((totalGain / yearlyProjection[0].value) * 100),
-      finalNetWorth: finalNetWorth,
-      totalDebt: totalDebt,
-      totalInterestPaid: totalInterestPaid,
-      totalCashOut: totalCashOut,
-      totalAdditionalBTC: totalAdditionalBTC,
-      finalBTC: currentBTC,
-      finalBTCPrice: finalBTCPrice,
-      ltvScenarios: ltvScenarios
+      requiredPortfolio,
+      projectedPortfolio: accumulationPhase.finalValue,
+      shortfall: accumulationPhase.finalValue - requiredPortfolio,
+      finalBTC: accumulationPhase.finalBTC,
+      retirementStrategy, // Store the strategy that was actually used
+      retirementViable: retirementPhase.viable,
+      yearsUntilDepletion: retirementPhase.yearsUntilDepletion,
+      finalRetirementValue: retirementPhase.finalValue
     });
-
-    setYearlyData(yearlyProjection);
-    setRatioData(ratioProjection);
-    generateChartData(yearlyProjection);
   };
-
-  // Generate chart data
-  const generateChartData = (yearlyProjection) => {
-    const chartData = yearlyProjection.map(year => ({
-      year: year.calendarYear,
-      value: year.value,
-      netWorth: year.netWorth,
-      debt: year.debt,
-      btcPrice: year.btcPrice / 1000, // Show in thousands
-      gainPercent: year.gainPercent
-    }));
+  
+  // Phase 1: Calculate accumulation phase with Dollar-Cost Averaging (DCA)
+  // This phase shows portfolio growth toward retirement target including monthly contributions
+  const calculateAccumulationPhase = (startingBTC, startPrice, assumptions, targetValue) => {
+    const totalMonths = yearsUntilRetirement * 12;
+    const monthlyGrowthRate = Math.pow(1 + assumptions.bitcoinGrowthRate / 100, 1 / 12) - 1;
     
-    setChartData(chartData);
-  };
-
-  // Update strategy parameters
-  const updateStrategyParam = (field, value) => {
-    setStrategyParams(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
-
-  // Update living parameters
-  const updateLivingParam = (field, value) => {
-    setLivingParams(prev => {
-      const updated = { ...prev, [field]: value };
-      // Auto-calculate annual expenses if monthly changes
-      if (field === 'monthlyExpenses') {
-        updated.annualExpenses = parseFloat(value) * 12;
+    // Initialize tracking variables
+    let currentBTC = startingBTC; // Start with initial Bitcoin holdings
+    let currentPrice = startPrice; // Track price month by month
+    const data = [];
+    
+    // Monthly DCA simulation loop
+    for (let month = 0; month <= totalMonths; month++) {
+      // Step 1: Apply one month of price growth (except for month 0)
+      if (month > 0) {
+        currentPrice = currentPrice * (1 + monthlyGrowthRate);
       }
-      return updated;
-    });
+      
+      // Step 2: Add monthly contribution by purchasing Bitcoin at current price
+      if (month > 0 && monthlyContribution > 0) {
+        const btcPurchased = monthlyContribution / currentPrice;
+        currentBTC += btcPurchased;
+      }
+      
+      // Calculate current portfolio value
+      const portfolioValue = currentBTC * currentPrice;
+      
+      // Store data points for charting (every 12 months for yearly display)
+      if (month % 12 === 0) {
+        const year = month / 12;
+        data.push({
+          year,
+          price: currentPrice,
+          portfolioValue,
+          targetValue, // Reference line showing retirement goal
+          btcAmount: currentBTC // Total BTC accumulated including DCA
+        });
+      }
+    }
+    
+    return {
+      data,
+      finalBTC: currentBTC,
+      finalPrice: currentPrice,
+      finalValue: currentBTC * currentPrice
+    };
+  };
+  
+  // Phase 2: Calculate retirement phase (customizable duration of retirement with strategy-specific logic)
+  // This phase simulates the chosen retirement strategy over the user-defined retirement duration
+  const calculateRetirementPhase = (startingBTC, startPrice, assumptions, retirementDuration) => {
+    console.log(`Calculating retirement phase with strategy: ${retirementStrategy}`);
+    // MODIFIED: Using customizable retirementDuration instead of hardcoded 30 years
+    const retirementYears = retirementDuration;
+    const data = [];
+    let currentBTC = startingBTC;
+    let currentLoanPrincipal = 0;
+    let currentIncome = desiredRetirementIncome;
+    let viable = true;
+    let yearsUntilDepletion = null;
+    
+    for (let year = 0; year <= retirementYears; year++) {
+      // Calculate Bitcoin price with post-retirement growth rate (typically lower)
+      const price = startPrice * Math.pow(1 + assumptions.postRetirementBitcoinGrowth / 100, year);
+      const portfolioValue = currentBTC * price;
+      
+      // Adjust income for inflation each year
+      if (year > 0) {
+        currentIncome *= (1 + assumptions.inflationRate / 100);
+      }
+      
+      if (retirementStrategy === 'sell') {
+        // SELL FOR INCOME STRATEGY: Gradually sell Bitcoin to fund living expenses
+        // Portfolio balance and BTC holdings decrease over time
+        if (year > 0 && currentBTC > 0) {
+          const btcToSell = currentIncome / price;
+          currentBTC = Math.max(0, currentBTC - btcToSell);
+          
+          if (year <= 3) {
+            console.log(`Sell strategy Year ${year}: Selling ${btcToSell.toFixed(4)} BTC, remaining: ${currentBTC.toFixed(4)} BTC`);
+          }
+          
+          // Check if we've run out of Bitcoin
+          if (currentBTC === 0 && !yearsUntilDepletion) {
+            yearsUntilDepletion = year;
+            viable = false;
+          }
+        }
+        
+        data.push({
+          year,
+          price,
+          btcHoldings: currentBTC,
+          portfolioValue: currentBTC * price,
+          annualIncome: year === 0 ? 0 : currentIncome,
+          strategy: 'sell'
+        });
+        
+      } else {
+        // BORROW FOR INCOME STRATEGY: Use Bitcoin as collateral, execute loan rollover
+        // BTC holdings stay constant, but debt accumulates with interest
+        if (year > 0) {
+          // Loan Rollover Logic:
+          // 1. Calculate interest on previous year's loan principal
+          const previousLoanInterest = currentLoanPrincipal * (assumptions.loanInterestRate / 100);
+          
+          // 2. Calculate new loan amount = old principal + interest + living expenses
+          const newLoanAmount = currentLoanPrincipal + previousLoanInterest + currentIncome;
+          
+          // 3. Calculate LTV ratio = total debt / BTC collateral value
+          const ltvRatio = portfolioValue > 0 ? (newLoanAmount / portfolioValue) * 100 : 100;
+          
+          if (year <= 3) {
+            console.log(`Borrow strategy Year ${year}: Loan principal: $${newLoanAmount.toFixed(0)}, LTV: ${ltvRatio.toFixed(1)}%`);
+          }
+          
+          // 4. Check if LTV exceeds safe threshold (75% = liquidation risk)
+          if (ltvRatio > 75 && !yearsUntilDepletion) {
+            yearsUntilDepletion = year;
+            viable = false;
+          }
+          
+          currentLoanPrincipal = newLoanAmount;
+        }
+        
+        data.push({
+          year,
+          price,
+          btcHoldings: currentBTC, // BTC holdings preserved
+          portfolioValue,
+          loanPrincipal: currentLoanPrincipal,
+          ltvRatio: portfolioValue > 0 ? (currentLoanPrincipal / portfolioValue) * 100 : 0,
+          annualIncome: year === 0 ? 0 : currentIncome,
+          strategy: 'borrow'
+        });
+      }
+    }
+    
+    return {
+      data,
+      viable,
+      yearsUntilDepletion,
+      finalValue: retirementStrategy === 'sell' 
+        ? currentBTC * data[retirementYears].price 
+        : data[retirementYears].portfolioValue - currentLoanPrincipal
+    };
+  };
+
+  // Update custom parameters when scenario is custom
+  const updateCustomParam = (field, value) => {
+    setCustomParams(prev => ({
+      ...prev,
+      [field]: parseFloat(value)
+    }));
   };
 
   // Format number with commas for display
@@ -455,333 +335,273 @@ const RetirementCalculator = () => {
     <div className="calculator-container">
       <h2 className="calculator-title">Bitcoin Retirement Calculator</h2>
       
-      {/* Strategy Mode Selection */}
+      {/* Top-Level Strategy Selector - Primary choice between sell vs borrow */}
       <div className="strategy-mode-section">
-        <h3 className="section-title">Retirement Strategy</h3>
+        <h3 className="section-title">How do you plan to fund your retirement?</h3>
         <div className="strategy-toggle">
           <button 
-            className={`strategy-btn ${strategyMode === 'traditional' ? 'active' : ''}`}
-            onClick={() => setStrategyMode('traditional')}
+            className={`strategy-btn ${retirementStrategy === 'sell' ? 'active' : ''}`}
+            onClick={() => {
+              setRetirementStrategy('sell');
+              console.log('Strategy changed to: sell');
+            }}
           >
-            Traditional Strategy
+            Sell for Income
           </button>
           <button 
-            className={`strategy-btn ${strategyMode === 'perpetual' ? 'active' : ''}`}
-            onClick={() => setStrategyMode('perpetual')}
+            className={`strategy-btn ${retirementStrategy === 'borrow' ? 'active' : ''}`}
+            onClick={() => {
+              setRetirementStrategy('borrow');
+              console.log('Strategy changed to: borrow');
+            }}
           >
-            Perpetual Loan Strategy
+            Borrow for Income
           </button>
         </div>
         <p className="strategy-description">
-          {strategyMode === 'traditional' 
-            ? "Hold and potentially sell Bitcoin over time for retirement expenses."
-            : "Use Bitcoin as collateral for loans to cover living expenses, keeping your Bitcoin intact."
+          {retirementStrategy === 'sell' 
+            ? "Gradually sell Bitcoin during retirement to fund living expenses. Your Bitcoin holdings will decrease over time."
+            : "Use Bitcoin as collateral for loans to fund expenses. Your Bitcoin stays intact but you accumulate debt."
           }
         </p>
       </div>
       
       <div className="calculator-form">
-        <div className="form-group">
-          <label className="form-label">Starting Bitcoin Amount (BTC)</label>
-          <input
-            type="number"
-            className="form-input"
-            value={startingBTC}
-            onChange={(e) => setStartingBTC(e.target.value)}
-            placeholder="Enter Bitcoin amount"
-            min="0"
-            step="0.00000001"
-          />
-        </div>
+        {/* Simplified Core Inputs - Reduced from many fields to essentials */}
+        <div className="core-inputs-section">
+          <div className="form-group">
+            <label className="form-label">Starting Bitcoin Amount (BTC)</label>
+            <input
+              type="number"
+              className="form-input"
+              value={startingBTC}
+              onChange={(e) => setStartingBTC(e.target.value)}
+              placeholder="Enter Bitcoin amount"
+              min="0"
+              step="0.00000001"
+            />
+          </div>
 
-        <div className="form-group">
-          <label className="form-label">
-            Current Bitcoin Price ($)
-            <button 
-              type="button"
-              onClick={fetchBitcoinPrice}
-              style={{
-                marginLeft: '10px',
-                padding: '4px 8px',
-                fontSize: '12px',
-                background: '#007BFF',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer'
-              }}
-              disabled={isLoadingPrice}
-            >
-              {isLoadingPrice ? 'Loading...' : 'Refresh'}
-            </button>
-          </label>
-          <input
-            type="number"
-            className="form-input"
-            value={bitcoinPrice}
-            onChange={(e) => setBitcoinPrice(e.target.value)}
-            placeholder="Enter Bitcoin price"
-            min="0"
-            step="0.01"
-          />
-        </div>
+          <div className="form-group">
+            <label className="form-label">
+              Current Bitcoin Price ($)
+              <button 
+                type="button"
+                onClick={fetchBitcoinPrice}
+                style={{
+                  marginLeft: '10px',
+                  padding: '4px 8px',
+                  fontSize: '12px',
+                  background: '#007BFF',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer'
+                }}
+                disabled={isLoadingPrice}
+              >
+                {isLoadingPrice ? 'Loading...' : 'Refresh'}
+              </button>
+            </label>
+            <input
+              type="number"
+              className="form-input"
+              value={bitcoinPrice}
+              onChange={(e) => setBitcoinPrice(e.target.value)}
+              placeholder="Enter Bitcoin price"
+              min="0"
+              step="0.01"
+            />
+          </div>
 
-        <div className="strategy-section">
-          <h3 className="scenarios-title">Strategy Parameters</h3>
-          <div className="strategy-grid">
-            <div className="strategy-item">
-              <label>Projection Years</label>
-              <input
-                type="number"
-                className="strategy-input"
-                value={strategyParams.projectionYears}
-                onChange={(e) => updateStrategyParam('projectionYears', e.target.value)}
-                min="5"
-                max="50"
-              />
+          {/* Desired Retirement Income */}
+          <div className="form-group">
+            <label className="form-label">Desired Annual Retirement Income ($)</label>
+            <input
+              type="number"
+              className="form-input"
+              value={desiredRetirementIncome}
+              onChange={(e) => setDesiredRetirementIncome(parseFloat(e.target.value))}
+              placeholder="Enter desired income"
+              min="0"
+              step="1000"
+            />
+          </div>
+          
+          {/* Years Until Retirement Slider - Replaces separate age inputs */}
+          <div className="form-group">
+            <label className="form-label">Years Until Retirement: {yearsUntilRetirement}</label>
+            <input
+              type="range"
+              className="form-slider"
+              min="5"
+              max="40"
+              value={yearsUntilRetirement}
+              onChange={(e) => setYearsUntilRetirement(parseInt(e.target.value))}
+            />
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#666' }}>
+              <span>5 years</span>
+              <span>40 years</span>
             </div>
-            
-            <div className="strategy-item">
-              <label>Annual Growth Rate (%)</label>
-              <input
-                type="number"
-                className="strategy-input"
-                value={strategyParams.annualGrowthRate}
-                onChange={(e) => updateStrategyParam('annualGrowthRate', e.target.value)}
-                min="0"
-                max="100"
-                step="0.1"
-              />
-            </div>
-            
-            <div className="strategy-item">
-              <label>Volatility Factor</label>
-              <input
-                type="number"
-                className="strategy-input"
-                value={strategyParams.volatilityFactor}
-                onChange={(e) => updateStrategyParam('volatilityFactor', e.target.value)}
-                min="0"
-                max="1"
-                step="0.1"
-              />
-            </div>
-            
-            <div className="strategy-item">
-              <label>Target LTV (%)</label>
-              <input
-                type="number"
-                className="strategy-input"
-                value={strategyParams.ltvTarget}
-                onChange={(e) => updateStrategyParam('ltvTarget', e.target.value)}
-                min="0"
-                max="50"
-                step="0.1"
-              />
-            </div>
-            
-            <div className="strategy-item">
-              <label>Max LTV (%)</label>
-              <input
-                type="number"
-                className="strategy-input"
-                value={strategyParams.maxLtv}
-                onChange={(e) => updateStrategyParam('maxLtv', e.target.value)}
-                min="0"
-                max="50"
-                step="0.1"
-              />
-            </div>
-            
-            <div className="strategy-item">
-              <label>Interest Rate (%)</label>
-              <input
-                type="number"
-                className="strategy-input"
-                value={strategyParams.interestRate}
-                onChange={(e) => updateStrategyParam('interestRate', e.target.value)}
-                min="0"
-                max="20"
-                step="0.1"
-              />
-            </div>
-            
-            <div className="strategy-item">
-              <label>Cash Out % of Gains</label>
-              <input
-                type="number"
-                className="strategy-input"
-                value={strategyParams.cashOutPercentage}
-                onChange={(e) => updateStrategyParam('cashOutPercentage', e.target.value)}
-                min="0"
-                max="100"
-                step="0.1"
-              />
-            </div>
-            
-            <div className="strategy-item">
-              <label>Additional BTC/Year</label>
-              <input
-                type="number"
-                className="strategy-input"
-                value={strategyParams.additionalBTC}
-                onChange={(e) => updateStrategyParam('additionalBTC', e.target.value)}
-                min="0"
-                step="0.01"
-              />
+          </div>
+          
+          {/* Retirement Duration Slider - New feature for customizable retirement period */}
+          <div className="form-group">
+            <label className="form-label">Retirement Duration (in years): {retirementDuration}</label>
+            <input
+              type="range"
+              className="form-slider"
+              min="10"
+              max="50"
+              value={retirementDuration}
+              onChange={(e) => setRetirementDuration(parseInt(e.target.value))}
+            />
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#666' }}>
+              <span>10 years</span>
+              <span>50 years</span>
             </div>
           </div>
         </div>
 
-        <div className="strategy-section">
-          <h3 className="scenarios-title">Living Expenses & House</h3>
-          <div className="strategy-grid">
-            <div className="strategy-item">
-              <label>Monthly Expenses ($)</label>
-              <input
-                type="number"
-                className="strategy-input"
-                value={livingParams.monthlyExpenses}
-                onChange={(e) => updateLivingParam('monthlyExpenses', e.target.value)}
-                min="0"
-                step="100"
-              />
-            </div>
-            
-            <div className="strategy-item">
-              <label>Annual Expenses ($)</label>
-              <input
-                type="number"
-                className="strategy-input"
-                value={livingParams.annualExpenses}
-                onChange={(e) => updateLivingParam('annualExpenses', e.target.value)}
-                min="0"
-                step="1000"
-                readOnly
-                style={{ backgroundColor: '#f8f9fa', color: '#6c757d' }}
-              />
-            </div>
-            
-            <div className="strategy-item">
-              <label>Cost of Living Increase (%/year)</label>
-              <input
-                type="number"
-                className="strategy-input"
-                value={livingParams.costOfLivingIncrease}
-                onChange={(e) => updateLivingParam('costOfLivingIncrease', e.target.value)}
-                min="0"
-                max="20"
-                step="0.1"
-              />
-            </div>
-            
-            <div className="strategy-item">
-              <label>House Value ($)</label>
-              <input
-                type="number"
-                className="strategy-input"
-                value={livingParams.houseValue}
-                onChange={(e) => updateLivingParam('houseValue', e.target.value)}
-                min="0"
-                step="10000"
-              />
-            </div>
-            
-            <div className="strategy-item">
-              <label>House Appreciation (%/year)</label>
-              <input
-                type="number"
-                className="strategy-input"
-                value={livingParams.houseAppreciation}
-                onChange={(e) => updateLivingParam('houseAppreciation', e.target.value)}
-                min="0"
-                max="20"
-                step="0.1"
-              />
+        {/* Contribution Plan Section - New DCA Feature */}
+        <div className="contribution-plan-section">
+          <h3 className="scenarios-title">Contribution Plan</h3>
+          <div className="form-group">
+            <label className="form-label">Regular Monthly Contribution ($)</label>
+            <input
+              type="number"
+              className="form-input"
+              value={monthlyContribution}
+              onChange={(e) => setMonthlyContribution(parseFloat(e.target.value) || 0)}
+              placeholder="Enter monthly contribution"
+              min="0"
+              step="100"
+            />
+            <div className="input-help">
+              Enter the dollar amount you plan to invest in Bitcoin each month during the accumulation phase. Set to 0 for no regular contributions.
             </div>
           </div>
         </div>
 
-        {/* Perpetual Loan Parameters - Only show when perpetual mode is selected */}
-        {strategyMode === 'perpetual' && (
-          <div className="strategy-section">
-            <h3 className="scenarios-title">Perpetual Loan Parameters</h3>
-            <div className="strategy-grid">
-              <div className="strategy-item">
-                <label>Expense Coverage by Loans (%)</label>
+        {/* Scenario Selector - Bundles all rate-based assumptions */}
+        <div className="scenario-section">
+          <h3 className="scenarios-title">Scenario</h3>
+          <div className="scenario-buttons">
+            {Object.keys(scenarios).map(scenario => (
+              <button
+                key={scenario}
+                className={`scenario-btn ${selectedScenario === scenario ? 'active' : ''}`}
+                onClick={() => setSelectedScenario(scenario)}
+              >
+                {scenario.charAt(0).toUpperCase() + scenario.slice(1)}
+              </button>
+            ))}
+          </div>
+          
+          {/* Show current scenario assumptions for transparency */}
+          <div className="scenario-display">
+            <h4>Current Assumptions:</h4>
+            <div className="assumptions-grid">
+              <div>Inflation Rate: {getCurrentAssumptions().inflationRate}%</div>
+              <div>Bitcoin Growth Rate: {getCurrentAssumptions().bitcoinGrowthRate}%</div>
+              {retirementStrategy === 'sell' && (
+                <div>Withdrawal Rate: {getCurrentAssumptions().withdrawalRate}%</div>
+              )}
+              {retirementStrategy === 'borrow' && (
+                <div>Target Annual LTV: {getCurrentAssumptions().targetAnnualLTV}%</div>
+              )}
+              <div>Loan Interest Rate: {getCurrentAssumptions().loanInterestRate}%</div>
+              <div>Post-Retirement BTC Growth: {getCurrentAssumptions().postRetirementBitcoinGrowth}%</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Custom Parameters - Only show when Custom scenario is selected */}
+        {selectedScenario === 'custom' && (
+          <div className="custom-params-section">
+            <h3 className="scenarios-title">Custom Parameters</h3>
+            <div className="custom-grid">
+              <div className="custom-item">
+                <label>Inflation Rate (%)</label>
                 <input
                   type="number"
-                  className="strategy-input"
-                  value={perpetualParams.expenseCoveragePercent}
-                  onChange={(e) => setPerpetualParams(prev => ({ ...prev, expenseCoveragePercent: parseInt(e.target.value) }))}
+                  className="custom-input"
+                  value={customParams.inflationRate}
+                  onChange={(e) => updateCustomParam('inflationRate', e.target.value)}
+                  min="0"
+                  max="20"
+                  step="0.1"
+                />
+              </div>
+              
+              <div className="custom-item">
+                <label>Bitcoin Growth Rate (%)</label>
+                <input
+                  type="number"
+                  className="custom-input"
+                  value={customParams.bitcoinGrowthRate}
+                  onChange={(e) => updateCustomParam('bitcoinGrowthRate', e.target.value)}
                   min="0"
                   max="100"
-                  step="5"
-                />
-              </div>
-              
-              <div className="strategy-item">
-                <label>Target LTV Range Min (%)</label>
-                <input
-                  type="number"
-                  className="strategy-input"
-                  value={perpetualParams.targetLtvMin}
-                  onChange={(e) => setPerpetualParams(prev => ({ ...prev, targetLtvMin: parseInt(e.target.value) }))}
-                  min="5"
-                  max="40"
                   step="1"
                 />
               </div>
               
-              <div className="strategy-item">
-                <label>Target LTV Range Max (%)</label>
+              {/* Show Withdrawal Rate only for Sell strategy */}
+              {retirementStrategy === 'sell' && (
+                <div className="custom-item">
+                  <label>Withdrawal Rate (%)</label>
+                  <input
+                    type="number"
+                    className="custom-input"
+                    value={customParams.withdrawalRate}
+                    onChange={(e) => updateCustomParam('withdrawalRate', e.target.value)}
+                    min="0"
+                    max="10"
+                    step="0.1"
+                  />
+                </div>
+              )}
+              
+              {/* Show Target Annual LTV only for Borrow strategy */}
+              {retirementStrategy === 'borrow' && (
+                <div className="custom-item">
+                  <label>Target Annual LTV (%)</label>
+                  <input
+                    type="number"
+                    className="custom-input"
+                    value={customParams.targetAnnualLTV}
+                    onChange={(e) => updateCustomParam('targetAnnualLTV', e.target.value)}
+                    min="5"
+                    max="50"
+                    step="1"
+                  />
+                </div>
+              )}
+              
+              <div className="custom-item">
+                <label>Loan Interest Rate (%)</label>
                 <input
                   type="number"
-                  className="strategy-input"
-                  value={perpetualParams.targetLtvMax}
-                  onChange={(e) => setPerpetualParams(prev => ({ ...prev, targetLtvMax: parseInt(e.target.value) }))}
-                  min="10"
-                  max="60"
-                  step="1"
+                  className="custom-input"
+                  value={customParams.loanInterestRate}
+                  onChange={(e) => updateCustomParam('loanInterestRate', e.target.value)}
+                  min="0"
+                  max="20"
+                  step="0.1"
                 />
               </div>
               
-              <div className="strategy-item">
-                <label>Emergency Buffer (Months)</label>
+              <div className="custom-item">
+                <label>Post-Retirement BTC Growth (%)</label>
                 <input
                   type="number"
-                  className="strategy-input"
-                  value={perpetualParams.emergencyBufferMonths}
-                  onChange={(e) => setPerpetualParams(prev => ({ ...prev, emergencyBufferMonths: parseInt(e.target.value) }))}
-                  min="3"
-                  max="24"
+                  className="custom-input"
+                  value={customParams.postRetirementBitcoinGrowth}
+                  onChange={(e) => updateCustomParam('postRetirementBitcoinGrowth', e.target.value)}
+                  min="0"
+                  max="50"
                   step="1"
-                />
-              </div>
-              
-              <div className="strategy-item">
-                <label>Paydown Trigger LTV (%)</label>
-                <input
-                  type="number"
-                  className="strategy-input"
-                  value={perpetualParams.paydownTriggerLtv}
-                  onChange={(e) => setPerpetualParams(prev => ({ ...prev, paydownTriggerLtv: parseInt(e.target.value) }))}
-                  min="25"
-                  max="70"
-                  step="1"
-                />
-              </div>
-              
-              <div className="strategy-item">
-                <label>Stress Test Drawdown (%)</label>
-                <input
-                  type="number"
-                  className="strategy-input"
-                  value={perpetualParams.stressTestDrawdown}
-                  onChange={(e) => setPerpetualParams(prev => ({ ...prev, stressTestDrawdown: parseInt(e.target.value) }))}
-                  min="-90"
-                  max="-10"
-                  step="5"
                 />
               </div>
             </div>
@@ -790,210 +610,76 @@ const RetirementCalculator = () => {
 
         <button 
           className="calculate-button"
-          onClick={strategyMode === 'perpetual' ? calculatePerpetualLoanStrategy : calculateRetirementProjection}
+          onClick={calculateRetirementProjection}
         >
-          {strategyMode === 'perpetual' ? 'Simulate Loan Strategy' : 'Calculate Retirement Projection'}
+          Calculate Retirement Plan
         </button>
       </div>
 
+      {/* Results Section - Simplified and focused on key insights */}
       {results && (
         <div className="results-container">
-          <h3 className="results-title">
-            {strategyMode === 'perpetual' ? 'Perpetual Loan Strategy Results' : 'Retirement Projection Results'}
-          </h3>
+          <h3 className="results-title">Retirement Analysis Results</h3>
           
-          {strategyMode === 'perpetual' ? (
-            <div className="results-grid">
-              <div className="result-item">
-                <div className="result-label">Final BTC Holdings</div>
-                <div className="result-value highlight">{results.finalBTC} BTC</div>
-              </div>
-              <div className="result-item">
-                <div className="result-label">Final Portfolio Value</div>
-                <div className="result-value">${formatNumber(results.finalValue)}</div>
-              </div>
-              <div className="result-item">
-                <div className="result-label">Total Outstanding Debt</div>
-                <div className="result-value">${formatNumber(results.totalDebt)}</div>
-              </div>
-              <div className="result-item">
-                <div className="result-label">Final LTV Ratio</div>
-                <div className={`result-value ${parseFloat(results.finalLTV) < 30 ? 'safe' : parseFloat(results.finalLTV) < 50 ? 'warning' : 'danger'}`}>
-                  {results.finalLTV}%
-                </div>
-              </div>
-              <div className="result-item">
-                <div className="result-label">Total Interest Paid</div>
-                <div className="result-value">${formatNumber(results.totalInterestPaid)}</div>
-              </div>
-              <div className="result-item">
-                <div className="result-label">Total Expenses Covered</div>
-                <div className="result-value highlight">${formatNumber(results.totalExpensesCovered)}</div>
-              </div>
-              <div className="result-item">
-                <div className="result-label">Average LTV</div>
-                <div className="result-value">{results.averageLTV}%</div>
-              </div>
-              <div className="result-item">
-                <div className="result-label">Years of Sustainability</div>
-                <div className={`result-value ${results.liquidationYear ? 'danger' : 'safe'}`}>
-                  {results.liquidationYear ? `${results.yearsOfSustainability} (Risk)` : `${results.yearsOfSustainability}+ (Sustainable)`}
-                </div>
+          <div className="results-grid">
+            <div className="result-item">
+              <div className="result-label">Required Portfolio for Retirement</div>
+              <div className="result-value">${formatNumber(results.requiredPortfolio)}</div>
+            </div>
+            <div className="result-item">
+              <div className="result-label">Projected Portfolio at Retirement</div>
+              <div className="result-value highlight">${formatNumber(results.projectedPortfolio)}</div>
+            </div>
+            <div className="result-item">
+              <div className="result-label">Portfolio Shortfall/Surplus</div>
+              <div className={`result-value ${results.shortfall >= 0 ? 'safe' : 'danger'}`}>
+                ${formatNumber(results.shortfall)}
               </div>
             </div>
-          ) : (
-            <div className="results-grid">
-              <div className="result-item">
-                <div className="result-label">Starting Value</div>
-                <div className="result-value">${formatNumber(results.startingValue)}</div>
-              </div>
-              <div className="result-item">
-                <div className="result-label">Final Value</div>
-                <div className="result-value highlight">${formatNumber(results.finalValue)}</div>
-              </div>
-              <div className="result-item">
-                <div className="result-label">Total Gain</div>
-                <div className="result-value">${formatNumber(results.totalGain)}</div>
-              </div>
-              <div className="result-item">
-                <div className="result-label">Total Gain %</div>
-                <div className="result-value">{formatPercent(results.totalGainPercent)}%</div>
-              </div>
-              <div className="result-item">
-                <div className="result-label">Final Net Worth</div>
-                <div className="result-value">${formatNumber(results.finalNetWorth)}</div>
-              </div>
-              <div className="result-item">
-                <div className="result-label">Final BTC Amount</div>
-                <div className="result-value">{results.finalBTC.toFixed(4)} BTC</div>
-              </div>
-              <div className="result-item">
-                <div className="result-label">Final BTC Price</div>
-                <div className="result-value">${formatNumber(results.finalBTCPrice)}</div>
-              </div>
-              <div className="result-item">
-                <div className="result-label">Total Interest Paid</div>
-                <div className="result-value">${formatNumber(results.totalInterestPaid)}</div>
-              </div>
-              <div className="result-item">
-                <div className="result-label">Total Cash Out</div>
-                <div className="result-value">${formatNumber(results.totalCashOut)}</div>
-              </div>
-              <div className="result-item">
-                <div className="result-label">Additional BTC Purchased</div>
-                <div className="result-value">{results.totalAdditionalBTC.toFixed(4)} BTC</div>
+            <div className="result-item">
+              <div className="result-label">Final BTC Holdings</div>
+              <div className="result-value">{results.finalBTC.toFixed(4)} BTC</div>
+            </div>
+            <div className="result-item">
+              <div className="result-label">Retirement Strategy</div>
+              <div className="result-value highlight">{retirementStrategy === 'sell' ? '🔽 Sell for Income' : '💰 Borrow for Income'}</div>
+            </div>
+            <div className="result-item">
+              <div className="result-label">Strategy Viability ({retirementDuration} years)</div>
+              <div className={`result-value ${results.retirementViable ? 'safe' : 'danger'}`}>
+                {results.retirementViable ? 'Viable' : 'Not Sustainable'}
               </div>
             </div>
-          )}
-          
-          {results.ltvScenarios && (
-            <div className="ltv-scenarios-section">
-              <h4 className="scenarios-title">50% LTV Loan Scenarios (Final Year)</h4>
-              <div className="scenarios-grid">
-                {results.ltvScenarios.map((scenario, index) => (
-                  <div key={index} className="scenario-card">
-                    <div className="scenario-header">
-                      <strong>{scenario.collateralPercent}% Collateral</strong>
-                    </div>
-                    <div className="scenario-details">
-                      <div className="scenario-row">
-                        <span>Collateral Value:</span>
-                        <span>${formatNumber(scenario.collateralValue)}</span>
-                      </div>
-                      <div className="scenario-row">
-                        <span>Loan Amount:</span>
-                        <span>${formatNumber(scenario.loanAmount)}</span>
-                      </div>
-                      <div className="scenario-row">
-                        <span>Annual Interest:</span>
-                        <span>${formatNumber(scenario.annualInterest)}</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+            {results.yearsUntilDepletion && (
+              <div className="result-item">
+                <div className="result-label">Years Until Depletion/Risk</div>
+                <div className="result-value danger">{results.yearsUntilDepletion} years</div>
               </div>
+            )}
+            <div className="result-item">
+              <div className="result-label">Final Retirement Net Worth</div>
+              <div className="result-value">${formatNumber(results.finalRetirementValue)}</div>
             </div>
-          )}
-        </div>
-      )}
-
-      {yearlyData.length > 0 && (
-        <div className="yearly-table-container">
-          <h3 className="chart-title">Year-by-Year Projection</h3>
-          <div className="yearly-table-wrapper">
-            <table className="yearly-table">
-              <thead>
-                <tr>
-                  <th>Year</th>
-                  <th>Value</th>
-                  <th>Gain %</th>
-                  <th>Gain $</th>
-                  <th>LTV %</th>
-                  <th>Debt</th>
-                  <th>Interest</th>
-                  <th>FCF</th>
-                  <th>Net Worth</th>
-                  <th>BTC Price</th>
-                  <th>House Value</th>
-                  <th>Stack/House</th>
-                  <th>Annual Expenses</th>
-                  <th>Stack/Expenses</th>
-                  <th>Liquidation Price</th>
-                </tr>
-              </thead>
-              <tbody>
-                {yearlyData.map((year, index) => (
-                  <tr key={index} className={year.gainPercent < 0 ? 'negative-gain' : ''}>
-                    <td>{year.calendarYear}</td>
-                    <td>${formatNumber(year.value)}</td>
-                    <td className={year.gainPercent < 0 ? 'negative' : 'positive'}>
-                      {formatPercent(year.gainPercent)}%
-                    </td>
-                    <td className={year.gainDollars < 0 ? 'negative' : 'positive'}>
-                      ${formatNumber(year.gainDollars)}
-                    </td>
-                    <td>{formatPercent(year.ltv)}%</td>
-                    <td>${formatNumber(year.debt)}</td>
-                    <td>${formatNumber(year.interest)}</td>
-                    <td className={year.fcf < 0 ? 'negative' : 'positive'}>
-                      ${formatNumber(year.fcf)}
-                    </td>
-                    <td>${formatNumber(year.netWorth)}</td>
-                    <td>${formatNumber(year.btcPrice)}</td>
-                    <td>${formatNumber(year.houseValue || 0)}</td>
-                    <td className={year.stackHouseRatio > 200 ? 'positive' : year.stackHouseRatio > 100 ? 'neutral' : 'negative'}>
-                      {formatPercent(year.stackHouseRatio || 0)}%
-                    </td>
-                    <td>${formatNumber(year.annualExpenses || 0)}</td>
-                    <td className={year.stackExpensesRatio > 25 ? 'positive' : year.stackExpensesRatio > 10 ? 'neutral' : 'negative'}>
-                      {formatPercent(year.stackExpensesRatio || 0)}x
-                    </td>
-                    <td className={year.liquidationPrice > year.btcPrice * 0.8 ? 'danger' : year.liquidationPrice > year.btcPrice * 0.5 ? 'warning' : 'safe'}>
-                      ${formatNumber(year.liquidationPrice || 0)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
           </div>
         </div>
       )}
 
-      {chartData.length > 0 && (
+      {/* Chart 1: Accumulation Phase - Shows path to retirement target */}
+      {accumulationData.length > 0 && (
         <div className="chart-container">
-          <h3 className="chart-title">Wealth Growth Over Time</h3>
+          <h3 className="chart-title">Chart 1: Accumulation Phase - Path to Retirement</h3>
           <ResponsiveContainer width="100%" height={400}>
-            <AreaChart data={chartData}>
+            <LineChart data={accumulationData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#333" />
               <XAxis 
                 dataKey="year" 
                 stroke="#EAEAEA"
-                label={{ value: 'Year', position: 'insideBottom', offset: -5 }}
+                label={{ value: 'Years Until Retirement', position: 'insideBottom', offset: -5 }}
               />
               <YAxis 
                 stroke="#EAEAEA"
-                label={{ value: 'Value ($)', angle: -90, position: 'insideLeft' }}
-                tickFormatter={(value) => `$${(value / 1000000).toFixed(0)}M`}
+                label={{ value: 'Portfolio Value ($)', angle: -90, position: 'insideLeft' }}
+                tickFormatter={(value) => `$${(value / 1000000).toFixed(1)}M`}
               />
               <Tooltip 
                 contentStyle={{ 
@@ -1003,63 +689,58 @@ const RetirementCalculator = () => {
                   color: '#EAEAEA'
                 }}
                 formatter={(value, name) => [
-                  name === 'btcPrice' ? `$${formatNumber(value * 1000)}` : `$${formatNumber(value)}`, 
-                  name === 'btcPrice' ? 'BTC Price' : name === 'netWorth' ? 'Net Worth' : name === 'debt' ? 'Debt' : 'Total Value'
+                  `$${formatNumber(value)}`, 
+                  name === 'portfolioValue' ? 'Projected Portfolio' : 'Required Portfolio'
                 ]}
-                labelFormatter={(label) => `Year: ${label}`}
+                labelFormatter={(label) => `Year ${label}`}
               />
               <Legend />
-              <Area 
-                type="monotone" 
-                dataKey="value" 
-                stroke="#007BFF" 
-                fill="#007BFF"
-                fillOpacity={0.3}
-                name="Total Value"
-              />
-              <Area 
-                type="monotone" 
-                dataKey="netWorth" 
-                stroke="#28a745" 
-                fill="#28a745"
-                fillOpacity={0.3}
-                name="Net Worth"
-              />
               <Line 
                 type="monotone" 
-                dataKey="debt" 
-                stroke="#dc3545" 
-                strokeWidth={2}
-                name="Debt"
+                dataKey="portfolioValue" 
+                stroke="#007BFF" 
+                strokeWidth={3}
+                name="Projected Portfolio Value"
               />
-            </AreaChart>
+              <ReferenceLine 
+                y={accumulationData[0]?.targetValue} 
+                stroke="#28a745" 
+                strokeWidth={2}
+                strokeDasharray="5 5"
+                label="Required Portfolio Target"
+              />
+            </LineChart>
           </ResponsiveContainer>
         </div>
       )}
 
-      {ratioData.length > 0 && (
+      {/* Chart 2: Retirement Phase - Strategy-specific simulation */}
+      {retirementData.length > 0 && (
         <div className="chart-container">
-          <h3 className="chart-title">Key Ratios & Risk Metrics</h3>
+          <h3 className="chart-title">Chart 2: Retirement Phase - {retirementDuration} Year Simulation (Strategy: {results?.retirementStrategy === 'sell' ? '🔽 SELL for Income' : '💰 BORROW for Income'})</h3>
           <ResponsiveContainer width="100%" height={400}>
-            <LineChart data={ratioData}>
+            <LineChart data={retirementData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#333" />
               <XAxis 
                 dataKey="year" 
                 stroke="#EAEAEA"
-                label={{ value: 'Year', position: 'insideBottom', offset: -5 }}
+                label={{ value: 'Years in Retirement', position: 'insideBottom', offset: -5 }}
               />
               <YAxis 
                 yAxisId="left"
                 stroke="#EAEAEA"
-                label={{ value: 'Ratio/LTV (%)', angle: -90, position: 'insideLeft' }}
+                label={{ value: results?.retirementStrategy === 'sell' ? 'BTC Holdings / Portfolio ($)' : 'Portfolio Value ($)', angle: -90, position: 'insideLeft' }}
+                tickFormatter={(value) => results?.retirementStrategy === 'sell' && value < 100 ? value.toFixed(2) : `$${(value / 1000000).toFixed(1)}M`}
               />
-              <YAxis 
-                yAxisId="right"
-                orientation="right"
-                stroke="#EAEAEA"
-                label={{ value: 'Price ($)', angle: 90, position: 'insideRight' }}
-                tickFormatter={(value) => `$${formatNumber(value)}`}
-              />
+              {results?.retirementStrategy === 'borrow' && (
+                <YAxis 
+                  yAxisId="right"
+                  orientation="right"
+                  stroke="#dc3545"
+                  label={{ value: 'LTV Ratio (%)', angle: 90, position: 'insideRight' }}
+                  tickFormatter={(value) => `${value.toFixed(0)}%`}
+                />
+              )}
               <Tooltip 
                 contentStyle={{ 
                   backgroundColor: '#1E1E1E', 
@@ -1068,57 +749,63 @@ const RetirementCalculator = () => {
                   color: '#EAEAEA'
                 }}
                 formatter={(value, name) => {
-                  if (name.includes('Price')) return [`$${formatNumber(value)}`, name];
-                  if (name.includes('Ratio')) return [`${value.toFixed(1)}%`, name];
-                  if (name === 'Stack/Expenses Ratio') return [`${value.toFixed(1)}x`, name];
-                  return [`${value.toFixed(1)}%`, name];
+                  if (name === 'btcHoldings') return [`${value.toFixed(4)} BTC`, 'BTC Holdings'];
+                  if (name === 'ltvRatio') return [`${value.toFixed(1)}%`, 'LTV Ratio'];
+                  if (name === 'loanPrincipal') return [`$${formatNumber(value)}`, 'Total Loan Principal'];
+                  return [`$${formatNumber(value)}`, name];
                 }}
-                labelFormatter={(label) => `Year: ${label}`}
+                labelFormatter={(label) => `Year ${label} of Retirement`}
               />
               <Legend />
-              <Line 
-                yAxisId="left"
-                type="monotone" 
-                dataKey="stackHouseRatio" 
-                stroke="#28a745" 
-                strokeWidth={2}
-                name="Stack/House Ratio"
-              />
-              <Line 
-                yAxisId="left"
-                type="monotone" 
-                dataKey="stackExpensesRatio" 
-                stroke="#17a2b8" 
-                strokeWidth={2}
-                name="Stack/Expenses Ratio"
-              />
-              <Line 
-                yAxisId="left"
-                type="monotone" 
-                dataKey="ltv" 
-                stroke="#ffc107" 
-                strokeWidth={2}
-                name="LTV %"
-              />
-              <Line 
-                yAxisId="right"
-                type="monotone" 
-                dataKey="liquidationPrice" 
-                stroke="#dc3545" 
-                strokeWidth={2}
-                strokeDasharray="5 5"
-                name="Liquidation Price"
-              />
-              <Line 
-                yAxisId="right"
-                type="monotone" 
-                dataKey="currentPrice" 
-                stroke="#007BFF" 
-                strokeWidth={3}
-                name="BTC Price"
-              />
-              <ReferenceLine yAxisId="left" y={25} stroke="#dc3545" strokeDasharray="3 3" label="Max LTV" />
-              <ReferenceLine yAxisId="left" y={100} stroke="#28a745" strokeDasharray="3 3" label="Stack=House" />
+              
+              {results?.retirementStrategy === 'sell' ? (
+                <>
+                  <Line 
+                    yAxisId="left"
+                    type="monotone" 
+                    dataKey="portfolioValue" 
+                    stroke="#007BFF" 
+                    strokeWidth={3}
+                    name="Portfolio Balance ($)"
+                  />
+                  <Line 
+                    yAxisId="left"
+                    type="monotone" 
+                    dataKey="btcHoldings" 
+                    stroke="#FFA500" 
+                    strokeWidth={2}
+                    name="BTC Holdings (amount)"
+                  />
+                </>
+              ) : (
+                <>
+                  <Line 
+                    yAxisId="left"
+                    type="monotone" 
+                    dataKey="btcHoldings" 
+                    stroke="#FFA500" 
+                    strokeWidth={2}
+                    name="BTC Holdings (preserved)"
+                  />
+                  <Line 
+                    yAxisId="left"
+                    type="monotone" 
+                    dataKey="loanPrincipal" 
+                    stroke="#dc3545" 
+                    strokeWidth={2}
+                    name="Total Loan Principal"
+                  />
+                  <Line 
+                    yAxisId="right"
+                    type="monotone" 
+                    dataKey="ltvRatio" 
+                    stroke="#FF6B6B" 
+                    strokeWidth={3}
+                    name="LTV Ratio (%)"
+                  />
+                  <ReferenceLine yAxisId="right" y={75} stroke="#dc3545" strokeDasharray="3 3" label="Danger Zone (75% LTV)" />
+                </>
+              )}
             </LineChart>
           </ResponsiveContainer>
         </div>
@@ -1128,4 +815,3 @@ const RetirementCalculator = () => {
 };
 
 export default RetirementCalculator;
-
