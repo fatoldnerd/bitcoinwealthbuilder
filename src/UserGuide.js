@@ -32,7 +32,7 @@ const UserGuide = () => {
             </p>
             
             <div className="calculator-overview-grid">
-              <div className="overview-card clickable-card" onClick={() => navigateToCalculator('/')}>
+              <div className="overview-card clickable-card" onClick={() => navigateToCalculator('/interest')}>
                 <div className="card-icon">📈</div>
                 <h3>Interest Calculator</h3>
                 <p>

@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, NavLink } from 'react-router-dom';
+import LandingPage from './LandingPage';
 import InterestCalculator from './InterestCalculator';
 import LTVCalculator from './LTVCalculator';
 import RetirementCalculator from './RetirementCalculator';
@@ -16,7 +17,8 @@ function App() {
               <h1>₿ Bitcoin Wealth Builder</h1>
             </div>
             <div className="nav-links">
-              <NavLink to="/" className="nav-link">Interest Calculator</NavLink>
+              <NavLink to="/" className="nav-link">Home</NavLink>
+              <NavLink to="/interest" className="nav-link">Interest Calculator</NavLink>
               <NavLink to="/ltv" className="nav-link">LTV Calculator</NavLink>
               <NavLink to="/retirement" className="nav-link">Retirement Calculator</NavLink>
               <NavLink to="/guide" className="nav-link guide-link">📚 User Guide</NavLink>
@@ -26,7 +28,8 @@ function App() {
         
         <main className="main-content">
           <Routes>
-            <Route path="/" element={<InterestCalculator />} />
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/interest" element={<InterestCalculator />} />
             <Route path="/ltv" element={<LTVCalculator />} />
             <Route path="/retirement" element={<RetirementCalculator />} />
             <Route path="/guide" element={<UserGuide />} />
