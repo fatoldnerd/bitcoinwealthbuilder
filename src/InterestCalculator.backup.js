@@ -10,7 +10,7 @@ const InterestCalculator = () => {
   const [initialInvestment, setInitialInvestment] = useState('');
   const [monthlyAddition, setMonthlyAddition] = useState('');
   const [timeInYears, setTimeInYears] = useState('');
-  const [annualRate, setAnnualRate] = useState('45'); // Default to moderate scenario
+  const [annualRate, setAnnualRate] = useState('');
   
   // Cost basis tracking state
   const [showCostBasis, setShowCostBasis] = useState(false);
@@ -22,24 +22,6 @@ const InterestCalculator = () => {
   const [results, setResults] = useState(null);
   const [chartData, setChartData] = useState([]);
   const [chartView, setChartView] = useState('combined'); // 'portfolio', 'bitcoin', 'combined'
-  
-  // Volatility mode state
-  const [projectionMode, setProjectionMode] = useState('smooth'); // 'smooth' or 'volatile'
-  const [volatilityFactor, setVolatilityFactor] = useState(70); // 0-100% volatility
-  const [numSimulations, setNumSimulations] = useState(1); // Number of volatile paths to show
-  
-  // Scenario selection state
-  const [selectedScenario, setSelectedScenario] = useState('moderate'); // 'conservative', 'moderate', 'optimistic', 'custom'
-  
-  // Interactive legend state for Combined View
-  const [hiddenSeries, setHiddenSeries] = useState(new Set());
-  
-  // Scenario configurations
-  const scenarios = {
-    conservative: { name: 'Conservative', rate: 20, volatility: 40 },
-    moderate:     { name: 'Moderate',     rate: 45, volatility: 70 },
-    optimistic:   { name: 'Optimistic',   rate: 70, volatility: 90 }
-  };
 
   // Fetch Bitcoin price from CoinGecko API on component mount
   useEffect(() => {
@@ -138,145 +120,6 @@ const InterestCalculator = () => {
     }
   };
 
-  // Handle scenario selection
-  const handleScenarioChange = (scenario) => {
-    setSelectedScenario(scenario);
-    
-    // Auto-update growth rate and volatility based on scenario selection
-    if (scenario !== 'custom') {
-      setAnnualRate(scenarios[scenario].rate.toString());
-      setVolatilityFactor(scenarios[scenario].volatility);
-    }
-  };
-
-  // Handle interactive legend clicks for Combined View
-  const handleLegendClick = (dataKey) => {
-    setHiddenSeries(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(dataKey)) {
-        newSet.delete(dataKey);
-      } else {
-        newSet.add(dataKey);
-      }
-      return newSet;
-    });
-  };
-
-  // Custom legend content for Combined View
-  const renderCustomLegend = (props) => {
-    const { payload } = props;
-    return (
-      <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: '15px', marginTop: '10px' }}>
-        {payload.map((entry, index) => (
-          <span
-            key={`item-${index}`}
-            onClick={() => handleLegendClick(entry.dataKey)}
-            style={{
-              color: hiddenSeries.has(entry.dataKey) ? '#666' : entry.color,
-              cursor: 'pointer',
-              textDecoration: hiddenSeries.has(entry.dataKey) ? 'line-through' : 'none',
-              opacity: hiddenSeries.has(entry.dataKey) ? 0.5 : 1,
-              fontWeight: hiddenSeries.has(entry.dataKey) ? 'normal' : '500',
-              userSelect: 'none',
-              transition: 'all 0.2s ease'
-            }}
-            onMouseOver={(e) => {
-              if (!hiddenSeries.has(entry.dataKey)) {
-                e.target.style.textDecoration = 'underline';
-              }
-            }}
-            onMouseOut={(e) => {
-              if (!hiddenSeries.has(entry.dataKey)) {
-                e.target.style.textDecoration = 'none';
-              }
-            }}
-          >
-            <span style={{ 
-              display: 'inline-block',
-              width: '10px',
-              height: '2px',
-              backgroundColor: entry.color,
-              marginRight: '5px',
-              verticalAlign: 'middle',
-              opacity: hiddenSeries.has(entry.dataKey) ? 0.3 : 1
-            }} />
-            {entry.value}
-          </span>
-        ))}
-      </div>
-    );
-  };
-
-  // Generate volatile Bitcoin growth path
-  const generateVolatileGrowthPath = (principal, monthlyDeposit, years, rate, btcAmount, btcPrice, volatility) => {
-    const yearlyData = [];
-    const monthlyRate = rate / 12;
-    
-    for (let year = 0; year <= years; year++) {
-      let yearCompound, yearMonthlyFV, btcGrowthMultiplier;
-      
-      if (year === 0) {
-        // Starting year - no volatility
-        yearCompound = principal;
-        yearMonthlyFV = 0;
-        btcGrowthMultiplier = 1;
-      } else {
-        // Apply volatility to each year
-        const randomVariation = (Math.random() - 0.5) * 2 * (volatility / 100);
-        const actualYearGrowth = rate + randomVariation;
-        
-        // Calculate compound growth with volatility
-        let cumulativeGrowth = 1;
-        for (let y = 1; y <= year; y++) {
-          const yearVariation = (Math.random() - 0.5) * 2 * (volatility / 100);
-          const yearGrowth = rate + yearVariation;
-          cumulativeGrowth *= (1 + yearGrowth);
-        }
-        
-        yearCompound = principal * cumulativeGrowth;
-        
-        // Monthly deposits with volatile growth
-        const yearMonths = year * 12;
-        yearMonthlyFV = 0;
-        for (let month = 1; month <= yearMonths; month++) {
-          const monthsToEnd = yearMonths - month;
-          const remainingYears = monthsToEnd / 12;
-          
-          let monthlyGrowth = 1;
-          for (let i = 0; i < remainingYears; i++) {
-            const yearVar = (Math.random() - 0.5) * 2 * (volatility / 100);
-            monthlyGrowth *= (1 + rate + yearVar);
-          }
-          
-          yearMonthlyFV += monthlyDeposit * monthlyGrowth;
-        }
-        
-        btcGrowthMultiplier = cumulativeGrowth;
-      }
-      
-      const yearTotal = yearCompound + yearMonthlyFV;
-      const yearMonths = year * 12;
-      
-      // Calculate BTC holdings with volatile growth
-      const btcFromMonthlyInvestments = year === 0 ? 0 : (monthlyDeposit * yearMonths) / btcPrice;
-      const totalBTC = btcAmount + btcFromMonthlyInvestments;
-      const totalBTCValue = totalBTC * btcPrice * btcGrowthMultiplier;
-      
-      yearlyData.push({
-        year: year,
-        value: Math.round(yearTotal),
-        principal: Math.round(principal + (monthlyDeposit * yearMonths)),
-        interest: Math.round(yearTotal - (principal + (monthlyDeposit * yearMonths))),
-        btcHoldings: Math.round(totalBTC * 100000000) / 100000000,
-        btcValue: Math.round(totalBTCValue),
-        dollarsInvested: Math.round(principal + (monthlyDeposit * yearMonths)),
-        growthMultiplier: btcGrowthMultiplier
-      });
-    }
-    
-    return yearlyData;
-  };
-
   // Compound interest calculation function
   const calculateCompoundInterest = () => {
     const btcAmount = parseFloat(currentBTC) || 0;
@@ -285,21 +128,8 @@ const InterestCalculator = () => {
     const monthlyDeposit = parseFloat(monthlyAddition) || 0;
     const years = parseFloat(timeInYears) || 0;
     const rate = parseFloat(annualRate) / 100 || 0;
-    // Check essential fields with specific error messages
-    if (years <= 0) {
-      alert('Please enter a valid time period in years (must be greater than 0)');
-      return;
-    }
-    if (rate <= 0) {
-      alert('Please enter a valid growth rate (must be greater than 0)');
-      return;
-    }
-    if (btcPrice <= 0) {
-      alert('Please enter or fetch a valid Bitcoin price');
-      return;
-    }
-    if (btcAmount <= 0 && principal <= 0) {
-      alert('Please enter either current Bitcoin holdings or an initial investment amount');
+    if ((btcAmount <= 0 && principal <= 0) || years <= 0 || rate <= 0 || btcPrice <= 0) {
+      alert('Please enter valid positive numbers for all required fields');
       return;
     }
 
@@ -312,64 +142,34 @@ const InterestCalculator = () => {
     const monthlyDepositFV = monthlyDeposit * 
       ((Math.pow(1 + monthlyRate, totalMonths) - 1) / monthlyRate);
     
-    // Generate chart data based on projection mode
-    let yearlyData;
-    let totalFutureValue;
-    let totalPrincipal;
-    let totalInterest;
-    
-    if (projectionMode === 'volatile') {
-      // Generate volatile path with multiple simulations
-      const simulations = [];
-      for (let i = 0; i < Math.max(1, numSimulations); i++) {
-        const simulation = generateVolatileGrowthPath(
-          principal, monthlyDeposit, years, rate, btcAmount, btcPrice, volatilityFactor
-        );
-        simulations.push(simulation);
-      }
-      
-      // For now, use the first simulation (could average multiple later)
-      yearlyData = simulations[0];
-      
-      // Update totals based on volatile projection
-      const finalData = yearlyData[yearlyData.length - 1];
-      totalFutureValue = finalData.value;
-      totalPrincipal = principal + (monthlyDeposit * totalMonths);
-      totalInterest = totalFutureValue - totalPrincipal;
-      
-    } else {
-      // Original smooth compound growth
-      const compoundAmount = principal * Math.pow(1 + rate, years);
-      const monthlyDepositFV = monthlyDeposit * 
-        ((Math.pow(1 + monthlyRate, totalMonths) - 1) / monthlyRate);
-      totalFutureValue = compoundAmount + monthlyDepositFV;
-      totalPrincipal = principal + (monthlyDeposit * totalMonths);
-      totalInterest = totalFutureValue - totalPrincipal;
+    const totalFutureValue = compoundAmount + monthlyDepositFV;
+    const totalPrincipal = principal + (monthlyDeposit * totalMonths);
+    const totalInterest = totalFutureValue - totalPrincipal;
 
-      // Generate smooth growth data
-      yearlyData = [];
-      for (let year = 0; year <= years; year++) {
-        const yearCompound = principal * Math.pow(1 + rate, year);
-        const yearMonths = year * 12;
-        const yearMonthlyFV = year === 0 ? 0 : monthlyDeposit * 
-          ((Math.pow(1 + monthlyRate, yearMonths) - 1) / monthlyRate);
-        const yearTotal = yearCompound + yearMonthlyFV;
-        
-        // Calculate BTC accumulated from monthly investments
-        const btcFromMonthlyInvestments = year === 0 ? 0 : (monthlyDeposit * yearMonths) / btcPrice;
-        const totalBTC = btcAmount + btcFromMonthlyInvestments;
-        const totalBTCValue = totalBTC * btcPrice * Math.pow(1 + rate, year);
-        
-        yearlyData.push({
-          year: year,
-          value: Math.round(yearTotal),
-          principal: Math.round(principal + (monthlyDeposit * yearMonths)),
-          interest: Math.round(yearTotal - (principal + (monthlyDeposit * yearMonths))),
-          btcHoldings: Math.round(totalBTC * 100000000) / 100000000,
-          btcValue: Math.round(totalBTCValue),
-          dollarsInvested: Math.round(principal + (monthlyDeposit * yearMonths))
-        });
-      }
+    // Generate chart data for year-by-year growth with BTC tracking
+    const yearlyData = [];
+    
+    for (let year = 0; year <= years; year++) {
+      const yearCompound = principal * Math.pow(1 + rate, year);
+      const yearMonths = year * 12;
+      const yearMonthlyFV = year === 0 ? 0 : monthlyDeposit * 
+        ((Math.pow(1 + monthlyRate, yearMonths) - 1) / monthlyRate);
+      const yearTotal = yearCompound + yearMonthlyFV;
+      
+      // Calculate BTC accumulated from monthly investments
+      const btcFromMonthlyInvestments = year === 0 ? 0 : (monthlyDeposit * yearMonths) / btcPrice;
+      const totalBTC = btcAmount + btcFromMonthlyInvestments;
+      const totalBTCValue = totalBTC * btcPrice * Math.pow(1 + rate, year); // BTC value appreciation
+      
+      yearlyData.push({
+        year: year,
+        value: Math.round(yearTotal),
+        principal: Math.round(principal + (monthlyDeposit * yearMonths)),
+        interest: Math.round(yearTotal - (principal + (monthlyDeposit * yearMonths))),
+        btcHoldings: Math.round(totalBTC * 100000000) / 100000000, // Round to 8 decimal places
+        btcValue: Math.round(totalBTCValue),
+        dollarsInvested: Math.round(principal + (monthlyDeposit * yearMonths))
+      });
     }
 
     const finalBTC = yearlyData[yearlyData.length - 1].btcHoldings;
@@ -562,103 +362,18 @@ const InterestCalculator = () => {
           />
         </div>
 
-        {/* Scenario Selector */}
-        <div className="form-group">
-          <label className="form-label">Growth Scenario</label>
-          <div className="scenario-selector-section">
-            <div className="scenario-buttons">
-              {Object.keys(scenarios).map((scenario) => (
-                <button
-                  key={scenario}
-                  type="button"
-                  onClick={() => handleScenarioChange(scenario)}
-                  className={`scenario-btn ${selectedScenario === scenario ? 'active' : ''}`}
-                >
-                  {scenarios[scenario].name}
-                </button>
-              ))}
-              <button
-                type="button"
-                onClick={() => handleScenarioChange('custom')}
-                className={`scenario-btn ${selectedScenario === 'custom' ? 'active' : ''}`}
-              >
-                Custom
-              </button>
-            </div>
-            {selectedScenario === 'custom' && (
-              <div className="custom-mode-warning">
-                ⚠️ You are in Custom Mode - set your own parameters below
-              </div>
-            )}
-          </div>
-        </div>
-
         <div className="form-group">
           <label className="form-label">Expected Bitcoin Annual Growth Rate (%)</label>
           <input
             type="number"
-            className={`form-input ${selectedScenario !== 'custom' ? 'calculated-input' : ''}`}
+            className="form-input"
             value={annualRate}
             onChange={(e) => setAnnualRate(e.target.value)}
             placeholder="Enter expected Bitcoin growth rate"
             min="0"
             step="0.01"
-            readOnly={selectedScenario !== 'custom'}
           />
         </div>
-
-        {/* Projection Mode Toggle */}
-        <div className="form-group">
-          <label className="form-label">Projection Mode</label>
-          <div className="projection-buttons">
-            <button 
-              className={`projection-btn ${projectionMode === 'smooth' ? 'active' : ''}`}
-              onClick={() => setProjectionMode('smooth')}
-              type="button"
-            >
-              📈 Smooth Growth
-            </button>
-            <button 
-              className={`projection-btn ${projectionMode === 'volatile' ? 'active' : ''}`}
-              onClick={() => setProjectionMode('volatile')}
-              type="button"
-            >
-              🎢 Realistic Volatility
-            </button>
-          </div>
-          <div className="mode-description">
-            {projectionMode === 'smooth' 
-              ? "Shows consistent, predictable growth each year (traditional compound interest)"
-              : "Simulates Bitcoin's actual volatility with year-to-year variations"
-            }
-          </div>
-        </div>
-
-        {/* Volatility Parameters - Only show in volatile mode */}
-        {projectionMode === 'volatile' && (
-          <div className="volatility-controls">
-            <div className="form-group">
-              <label className="form-label">Volatility Factor (%)</label>
-              <input
-                type="number"
-                className={`form-input ${selectedScenario !== 'custom' ? 'calculated-input' : ''}`}
-                value={volatilityFactor}
-                onChange={(e) => setVolatilityFactor(Number(e.target.value))}
-                placeholder="Enter volatility percentage"
-                min="0"
-                max="150"
-                step="5"
-                readOnly={selectedScenario !== 'custom'}
-              />
-              <div className="input-help">
-                {selectedScenario !== 'custom' 
-                  ? `Set by ${scenarios[selectedScenario]?.name || 'Selected'} scenario (${volatilityFactor}%). Switch to Custom mode to adjust.`
-                  : 'Higher values = more dramatic year-to-year swings. Bitcoin\'s historical volatility is ~70-100%.'
-                }
-              </div>
-            </div>
-          </div>
-        )}
 
 
         <button 
@@ -841,7 +556,7 @@ const InterestCalculator = () => {
                   stackId="1"
                   stroke="#007BFF"
                   fill="url(#interestGradient)"
-                  name="Total Value"
+                  name="Interest/Growth"
                 />
               </AreaChart>
             ) : chartView === 'bitcoin' ? (
@@ -855,14 +570,12 @@ const InterestCalculator = () => {
                 <YAxis 
                   yAxisId="left"
                   stroke="#EAEAEA"
-                  tick={{ fill: '#FFC107' }}
                   tickFormatter={(value) => `${value.toFixed(4)} BTC`}
                 />
                 <YAxis 
                   yAxisId="right"
                   orientation="right"
                   stroke="#FF8C00"
-                  tick={{ fill: '#FF8C00' }}
                   tickFormatter={(value) => `$${(value / 1000).toFixed(0)}K`}
                 />
                 <Tooltip 
@@ -934,7 +647,7 @@ const InterestCalculator = () => {
                   }}
                   labelFormatter={(label) => `Year ${label}`}
                 />
-                <Legend content={renderCustomLegend} />
+                <Legend />
                 <Line 
                   yAxisId="left"
                   type="monotone" 
@@ -943,7 +656,6 @@ const InterestCalculator = () => {
                   strokeWidth={3}
                   dot={{ fill: '#007BFF', strokeWidth: 2, r: 4 }}
                   name="Total Value"
-                  hide={hiddenSeries.has('value')}
                 />
                 <Line 
                   yAxisId="left"
@@ -954,7 +666,6 @@ const InterestCalculator = () => {
                   strokeDasharray="5 5"
                   dot={{ fill: '#28a745', strokeWidth: 2, r: 3 }}
                   name="Principal"
-                  hide={hiddenSeries.has('principal')}
                 />
                 <Line 
                   yAxisId="left"
@@ -964,7 +675,6 @@ const InterestCalculator = () => {
                   strokeWidth={2}
                   dot={{ fill: '#FF8C00', strokeWidth: 2, r: 3 }}
                   name="BTC Value"
-                  hide={hiddenSeries.has('btcValue')}
                 />
                 <Line 
                   yAxisId="right"
@@ -975,7 +685,6 @@ const InterestCalculator = () => {
                   strokeDasharray="3 3"
                   dot={{ fill: '#FFC107', strokeWidth: 2, r: 3 }}
                   name="BTC Holdings"
-                  hide={hiddenSeries.has('btcHoldings')}
                 />
               </LineChart>
             )}

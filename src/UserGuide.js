@@ -128,8 +128,146 @@ const UserGuide = () => {
                   <p>Investment timeline. Bitcoin's 4-year cycles make longer periods (8+ years) more predictable for combined hodling + DCA strategies.</p>
                 </div>
                 <div className="parameter-item">
+                  <strong>Growth Scenario:</strong>
+                  <p>Quick-select preset combinations of growth rate and volatility, or choose Custom for manual control. Scenarios automatically set both Expected Growth Rate and Volatility Factor.</p>
+                </div>
+                <div className="parameter-item">
                   <strong>Expected Bitcoin Annual Growth Rate:</strong>
-                  <p>Expected annual return for Bitcoin price appreciation. Use conservative estimates (20-50%) for realistic planning of your existing stack growth.</p>
+                  <p>Expected annual return for Bitcoin price appreciation. Can be set automatically by scenario selection or manually in Custom mode. Use conservative estimates (20-50%) for realistic planning.</p>
+                </div>
+                <div className="parameter-item">
+                  <strong>Projection Mode:</strong>
+                  <p>Choose between "Smooth Growth" (traditional compound interest) or "Realistic Volatility" (simulates Bitcoin's real-world price fluctuations year-to-year).</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="guide-section">
+              <h3>Growth Scenarios</h3>
+              <p>
+                Growth Scenarios provide quick-select preset combinations of growth rates and volatility that represent 
+                different Bitcoin investment philosophies. Choose a scenario to automatically set both your expected 
+                growth rate and volatility factor, or select Custom for full manual control.
+              </p>
+              
+              <div className="scenario-explanation-grid">
+                <div className="scenario-explanation">
+                  <h4 style={{color: '#28a745', marginBottom: '0.5rem'}}>Conservative</h4>
+                  <p><strong>Growth:</strong> 20% annually</p>
+                  <p><strong>Volatility:</strong> 40%</p>
+                  <p style={{fontSize: '0.8rem', marginTop: '0.5rem'}}>Lower expectations with reduced risk</p>
+                </div>
+                <div className="scenario-explanation">
+                  <h4 style={{color: '#007BFF', marginBottom: '0.5rem'}}>Moderate</h4>
+                  <p><strong>Growth:</strong> 45% annually</p>
+                  <p><strong>Volatility:</strong> 70%</p>
+                  <p style={{fontSize: '0.8rem', marginTop: '0.5rem'}}>Balanced Bitcoin performance expectations</p>
+                </div>
+                <div className="scenario-explanation">
+                  <h4 style={{color: '#FF8C00', marginBottom: '0.5rem'}}>Optimistic</h4>
+                  <p><strong>Growth:</strong> 70% annually</p>
+                  <p><strong>Volatility:</strong> 90%</p>
+                  <p style={{fontSize: '0.8rem', marginTop: '0.5rem'}}>High growth with maximum volatility</p>
+                </div>
+                <div className="scenario-explanation">
+                  <h4 style={{color: '#FFC107', marginBottom: '0.5rem'}}>Custom</h4>
+                  <p><strong>Growth:</strong> Your choice</p>
+                  <p><strong>Volatility:</strong> Your choice</p>
+                  <p style={{fontSize: '0.8rem', marginTop: '0.5rem'}}>Full manual control over parameters</p>
+                </div>
+              </div>
+
+              <div className="guide-section">
+                <h4>How to Use Growth Scenarios</h4>
+                <div className="step-by-step-guide">
+                  <div className="step">
+                    <h4>Step 1: Choose Your Scenario</h4>
+                    <ul>
+                      <li><strong>New to Bitcoin:</strong> Start with Conservative (20% growth) for safer projections</li>
+                      <li><strong>Experienced Holder:</strong> Use Moderate (45% growth) for balanced expectations</li>
+                      <li><strong>Bitcoin Maximalist:</strong> Try Optimistic (70% growth) for bullish projections</li>
+                      <li><strong>Specific Requirements:</strong> Select Custom to set your own exact values</li>
+                    </ul>
+                  </div>
+                  
+                  <div className="step">
+                    <h4>Step 2: Understand Preset Behavior</h4>
+                    <ul>
+                      <li>When you select Conservative, Moderate, or Optimistic, the growth rate and volatility inputs become <strong>read-only</strong></li>
+                      <li>Values are automatically set based on the scenario's predefined parameters</li>
+                      <li>To change values, you must switch to Custom mode</li>
+                    </ul>
+                  </div>
+                  
+                  <div className="step">
+                    <h4>Step 3: Custom Mode Details</h4>
+                    <ul>
+                      <li>Select "Custom" to unlock manual editing of growth rate and volatility</li>
+                      <li>A warning message appears: "⚠️ You are in Custom Mode - set your own parameters below"</li>
+                      <li>All input fields become editable for precise control</li>
+                      <li>Perfect for testing specific scenarios or matching historical data</li>
+                    </ul>
+                  </div>
+                </div>
+                
+                <div className="tip-item success">
+                  <strong>💡 Pro Tip:</strong> Start with a preset scenario close to your expectations, then switch to Custom mode to fine-tune the values if needed.
+                </div>
+              </div>
+            </div>
+
+            <div className="guide-section">
+              <h3>Projection Modes</h3>
+              <div className="strategy-comparison-grid">
+                <div className="strategy-comparison-card">
+                  <h4>Smooth Growth Mode</h4>
+                  <p>Uses traditional compound interest calculations with your Expected Annual Growth Rate applied consistently each year.</p>
+                  <div className="pros">
+                    <strong>✓ Pros:</strong>
+                    <ul>
+                      <li>Clean mathematical projection</li>
+                      <li>Easy to understand and plan with</li>
+                      <li>Shows average long-term trajectory</li>
+                      <li>Perfect for conservative financial planning</li>
+                    </ul>
+                  </div>
+                  <div className="ideal-for">
+                    <strong>Best for:</strong> Traditional financial planning and average long-term projections
+                  </div>
+                </div>
+                <div className="strategy-comparison-card">
+                  <h4>Realistic Volatility Mode</h4>
+                  <p>Simulates Bitcoin's actual volatility with year-to-year price fluctuations around your expected average growth rate.</p>
+                  <div className="pros">
+                    <strong>✓ Pros:</strong>
+                    <ul>
+                      <li>More realistic Bitcoin-like growth patterns</li>
+                      <li>Shows potential ups and downs</li>
+                      <li>Helps with psychological preparation</li>
+                      <li>Demonstrates volatility around long-term trend</li>
+                    </ul>
+                  </div>
+                  <div className="ideal-for">
+                    <strong>Best for:</strong> Understanding Bitcoin's volatile nature while maintaining long-term growth expectations
+                  </div>
+                </div>
+              </div>
+              
+              <div className="guide-section">
+                <h4>Volatility Controls</h4>
+                <p>When using Realistic Volatility mode, volatility settings can be preset by Growth Scenarios or customized manually:</p>
+                <div className="parameter-grid">
+                  <div className="parameter-item">
+                    <strong>Volatility Factor (0-100%):</strong>
+                    <p>Controls how much yearly returns can vary. Automatically set by Growth Scenarios (Conservative: 40%, Moderate: 70%, Optimistic: 90%) or manually adjustable in Custom mode. Higher values create more dramatic year-to-year swings.</p>
+                  </div>
+                  <div className="parameter-item">
+                    <strong>Scenario Integration:</strong>
+                    <p>When using preset scenarios, volatility is automatically configured. Switch to Custom mode to manually adjust volatility settings for your specific needs.</p>
+                  </div>
+                </div>
+                <div className="tip-item warning">
+                  <strong>⚠️ Important:</strong> Volatility mode shows ONE possible path. Bitcoin's actual performance will be different, but the long-term average should approach your Expected Annual Growth Rate.
                 </div>
               </div>
             </div>
