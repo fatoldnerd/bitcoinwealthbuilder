@@ -1,5 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import wasabiQR from './WasabiTipJar.png';
+import walletOfSatoshiQR from './WalletOfSatoshiTipJar.jpeg';
 
 const LandingPage = () => {
   const navigate = useNavigate();
@@ -102,6 +104,32 @@ const LandingPage = () => {
           <div className="info-card">
             <h3>📚 Comprehensive Guide</h3>
             <p>Detailed documentation and examples to help you make informed decisions.</p>
+          </div>
+        </div>
+      </section>
+
+      {/* Donation Section */}
+      <section className="donation-section">
+        <h2 className="donation-headline">Support This Project</h2>
+        <p className="donation-intro">
+          If you find these tools valuable, please consider supporting their continued development. Thank you!
+        </p>
+        
+        <div className="donation-grid">
+          {/* On-Chain Donation Card */}
+          <div className="donation-card">
+            <h3 className="donation-subtitle">On-Chain Bitcoin</h3>
+            <div className="qr-code-container">
+              <img src={wasabiQR} alt="On-Chain Bitcoin QR Code" className="qr-code-image" />
+            </div>
+          </div>
+
+          {/* Lightning Donation Card */}
+          <div className="donation-card">
+            <h3 className="donation-subtitle">Lightning</h3>
+            <div className="qr-code-container">
+              <img src={walletOfSatoshiQR} alt="Lightning QR Code" className="qr-code-image" />
+            </div>
           </div>
         </div>
       </section>
