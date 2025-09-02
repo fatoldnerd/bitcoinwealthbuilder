@@ -1,9 +1,13 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, NavLink } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Navigation from './Navigation';
 import LandingPage from './LandingPage';
 import InterestCalculator from './InterestCalculator';
+import GoalPlanner from './GoalPlanner';
 import LTVCalculator from './LTVCalculator';
 import RetirementCalculator from './RetirementCalculator';
+import OpportunityCostCalculator from './OpportunityCostCalculator';
+import MyDashboard from './MyDashboard';
 import UserGuide from './UserGuide';
 import './App.css';
 
@@ -11,27 +15,18 @@ function App() {
   return (
     <Router>
       <div className="App">
-        <header className="app-header">
-          <nav className="nav-container">
-            <div className="logo">
-              <h1>₿ Bitcoin Wealth Builder</h1>
-            </div>
-            <div className="nav-links">
-              <NavLink to="/" className="nav-link">Home</NavLink>
-              <NavLink to="/interest" className="nav-link">Interest Calculator</NavLink>
-              <NavLink to="/ltv" className="nav-link">LTV Calculator</NavLink>
-              <NavLink to="/retirement" className="nav-link">Retirement Calculator</NavLink>
-              <NavLink to="/guide" className="nav-link guide-link">📚 User Guide</NavLink>
-            </div>
-          </nav>
-        </header>
+        {/* New Navigation Component */}
+        <Navigation />
         
         <main className="main-content">
           <Routes>
             <Route path="/" element={<LandingPage />} />
             <Route path="/interest" element={<InterestCalculator />} />
+            <Route path="/goal-planner" element={<GoalPlanner />} />
             <Route path="/ltv" element={<LTVCalculator />} />
             <Route path="/retirement" element={<RetirementCalculator />} />
+            <Route path="/opportunity-cost" element={<OpportunityCostCalculator />} />
+            <Route path="/dashboard" element={<MyDashboard />} />
             <Route path="/guide" element={<UserGuide />} />
           </Routes>
         </main>

@@ -1,8 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, ReferenceLine } from 'recharts';
 
 const RetirementCalculator = () => {
+  const navigate = useNavigate();
+  
+  // Goal saving states
+  const [showGoalModal, setShowGoalModal] = useState(false);
+  const [goalName, setGoalName] = useState('');
+  
   // Core input values - simplified to essential parameters only
   const [startingBTC, setStartingBTC] = useState('3.4'); // User's current Bitcoin holdings
   const [bitcoinPrice, setBitcoinPrice] = useState(''); // Current Bitcoin price (fetched from API)
@@ -329,6 +336,47 @@ const RetirementCalculator = () => {
   // Format percentage
   const formatPercent = (num) => {
     return parseFloat(num).toFixed(1);
+  };
+
+  // Goal saving functions for dashboard integration
+  const handleStartPlan = () => {
+    if (!results) return;
+    setShowGoalModal(true);
+  };
+
+  const saveGoal = () => {
+    if (!goalName.trim() || !results) return;
+
+    const newGoal = {
+      id: Date.now().toString(), // Simple unique ID
+      goalName: goalName.trim(),
+      targetAmount: results.requiredPortfolio,
+      monthlyContribution: monthlyContribution,
+      totalMonths: yearsUntilRetirement * 12,
+      monthsCompleted: 0,
+      createdDate: new Date().toISOString(),
+      strategy: retirementStrategy,
+      currentProgress: 0 // 0-100 percentage
+    };
+
+    // Load existing goals from localStorage
+    const existingGoals = JSON.parse(localStorage.getItem('bitcoinGoals') || '[]');
+    
+    // Add new goal to array
+    const updatedGoals = [...existingGoals, newGoal];
+    
+    // Save back to localStorage
+    localStorage.setItem('bitcoinGoals', JSON.stringify(updatedGoals));
+
+    // Close modal and navigate to dashboard
+    setShowGoalModal(false);
+    setGoalName('');
+    navigate('/dashboard');
+  };
+
+  const closeModal = () => {
+    setShowGoalModal(false);
+    setGoalName('');
   };
 
   return (
@@ -659,6 +707,106 @@ const RetirementCalculator = () => {
             <div className="result-item">
               <div className="result-label">Final Retirement Net Worth</div>
               <div className="result-value">${formatNumber(results.finalRetirementValue)}</div>
+            </div>
+          </div>
+          
+          {/* Start My Plan Button */}
+          <div style={{ textAlign: 'center', marginTop: '2rem' }}>
+            <button 
+              className="calculate-button"
+              onClick={handleStartPlan}
+              style={{ 
+                background: 'linear-gradient(135deg, #FF8C00, #FFA500)',
+                fontSize: '1.1rem',
+                padding: '1rem 2rem',
+                textTransform: 'uppercase',
+                letterSpacing: '1px',
+                fontWeight: '700'
+              }}
+            >
+              🚀 Start My Plan
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Goal Creation Modal */}
+      {showGoalModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            backgroundColor: '#1E1E1E',
+            padding: '2rem',
+            borderRadius: '12px',
+            border: '1px solid #333',
+            boxShadow: '0 10px 40px rgba(0, 0, 0, 0.5)',
+            maxWidth: '400px',
+            width: '90%'
+          }}>
+            <h3 style={{ color: '#FF8C00', marginBottom: '1rem', textAlign: 'center' }}>
+              Name Your Goal
+            </h3>
+            <p style={{ color: '#BDBDBD', marginBottom: '1.5rem', textAlign: 'center' }}>
+              Give your retirement plan a memorable name to track your progress.
+            </p>
+            <input
+              type="text"
+              placeholder="e.g. Retirement, Early Retirement, House Down Payment"
+              value={goalName}
+              onChange={(e) => setGoalName(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '0.75rem',
+                border: '2px solid #333',
+                borderRadius: '8px',
+                backgroundColor: '#2A2A2A',
+                color: '#EAEAEA',
+                fontSize: '1rem',
+                marginBottom: '1.5rem'
+              }}
+              autoFocus
+            />
+            <div style={{ display: 'flex', gap: '1rem' }}>
+              <button 
+                onClick={closeModal}
+                style={{
+                  flex: 1,
+                  padding: '0.75rem',
+                  border: '2px solid #333',
+                  borderRadius: '8px',
+                  backgroundColor: 'transparent',
+                  color: '#EAEAEA',
+                  cursor: 'pointer'
+                }}
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={saveGoal}
+                disabled={!goalName.trim()}
+                style={{
+                  flex: 1,
+                  padding: '0.75rem',
+                  border: 'none',
+                  borderRadius: '8px',
+                  background: goalName.trim() ? 'linear-gradient(135deg, #FF8C00, #FFA500)' : '#333',
+                  color: goalName.trim() ? 'white' : '#666',
+                  cursor: goalName.trim() ? 'pointer' : 'not-allowed',
+                  fontWeight: '600'
+                }}
+              >
+                Save Goal
+              </button>
             </div>
           </div>
         </div>
