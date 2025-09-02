@@ -1,6 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, ReferenceLine } from 'recharts';
+import { PDFDownloadLink } from '@react-pdf/renderer';
+import html2canvas from 'html2canvas';
+import ReportDocument from './ReportDocument';
 
 const GoalPlanner = () => {
   const navigate = useNavigate();
@@ -23,6 +26,15 @@ const GoalPlanner = () => {
   const [chartData, setChartData] = useState([]);
   const [showGoalModal, setShowGoalModal] = useState(false);
   const [goalNameForSaving, setGoalNameForSaving] = useState('');
+  
+  // Report generation state
+  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
+  const [reportReady, setReportReady] = useState(false);
+  const [aiSummary, setAiSummary] = useState('');
+  const [chartImageData, setChartImageData] = useState('');
+  
+  // Chart reference for capturing
+  const chartRef = useRef(null);
 
   // Scenario configurations
   const scenarios = {
@@ -167,6 +179,86 @@ const GoalPlanner = () => {
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(amount);
+  };
+
+  // Capture chart as image
+  const captureChart = async () => {
+    if (chartRef.current) {
+      try {
+        const canvas = await html2canvas(chartRef.current, {
+          backgroundColor: '#1E1E1E',
+          scale: 2
+        });
+        return canvas.toDataURL('image/png');
+      } catch (error) {
+        console.error('Error capturing chart:', error);
+        return null;
+      }
+    }
+    return null;
+  };
+
+  // Generate AI-powered report
+  const generateReport = async () => {
+    if (!results || !goalName.trim()) {
+      alert('Please calculate a goal plan and provide a goal name first.');
+      return;
+    }
+    
+    setIsGeneratingReport(true);
+    setReportReady(false);
+    
+    try {
+      // Capture chart image first
+      const chartImage = await captureChart();
+      setChartImageData(chartImage || '');
+      
+      // Get current scenario for more detailed data
+      const scenario = getCurrentScenario();
+      const scenarioName = selectedScenario.charAt(0).toUpperCase() + selectedScenario.slice(1);
+      
+      // Gather comprehensive plan data
+      const planData = {
+        goalName: goalName.trim(),
+        timeHorizon: parseInt(timeHorizon),
+        finalValue: results.finalValue,
+        monthlyContribution: parseFloat(monthlyContribution) || 0,
+        startingCapital: parseFloat(startingCapital) || 0,
+        growthScenario: scenarioName,
+        projectionMode: projectionMode,
+        targetAmount: parseFloat(targetAmount) || 0
+      };
+      
+      // Call our serverless function
+      const response = await fetch('/api/generateReport', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(planData)
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        setAiSummary(data.summary);
+        setReportReady(true);
+      } else {
+        throw new Error(data.error || 'Failed to generate report');
+      }
+      
+    } catch (error) {
+      console.error('Error generating report:', error);
+      // Set fallback AI summary but still allow report download
+      setAiSummary('This financial plan analysis shows your projected path to reaching your goal through disciplined Bitcoin investment. Your systematic approach of regular contributions combined with long-term strategy positions you well for achieving your financial objectives.');
+      setReportReady(true);
+    } finally {
+      setIsGeneratingReport(false);
+    }
   };
 
   return (
@@ -410,6 +502,7 @@ const GoalPlanner = () => {
       {chartData.length > 0 && (
         <div className="chart-container">
           <h3 className="chart-title">Goal Projection Chart</h3>
+          <div ref={chartRef}>
           <ResponsiveContainer width="100%" height={400}>
             <LineChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#333" />
@@ -453,11 +546,83 @@ const GoalPlanner = () => {
               />
             </LineChart>
           </ResponsiveContainer>
+          </div>
           <div className="chart-note">
             <small>
               The green dashed line represents your target amount. Your portfolio projection should cross above this line to successfully reach your goal.
             </small>
           </div>
+        </div>
+      )}
+
+      {/* Report Generation Section */}
+      {results && (
+        <div className="report-generation-section" style={{ textAlign: 'center', marginTop: '2rem' }}>
+          {!reportReady ? (
+            <button
+              className="calculate-button"
+              onClick={generateReport}
+              disabled={isGeneratingReport}
+              style={{
+                background: isGeneratingReport 
+                  ? 'linear-gradient(135deg, #666, #888)' 
+                  : 'linear-gradient(135deg, #28a745, #20c997)',
+                fontSize: '1.1rem',
+                padding: '1rem 2rem',
+                textTransform: 'uppercase',
+                letterSpacing: '1px',
+                fontWeight: '700',
+                cursor: isGeneratingReport ? 'not-allowed' : 'pointer',
+                opacity: isGeneratingReport ? 0.7 : 1
+              }}
+            >
+              {isGeneratingReport ? '🤖 Generating Report...' : '📄 Generate Report'}
+            </button>
+          ) : (
+            <div>
+              <p style={{ color: '#28a745', marginBottom: '1rem', fontSize: '1.1rem' }}>
+                ✅ Report Ready! Your AI-powered financial analysis has been generated.
+              </p>
+              <PDFDownloadLink
+                document={
+                  <ReportDocument 
+                    planData={{
+                      goalName: goalName.trim(),
+                      timeHorizon: parseInt(timeHorizon),
+                      finalValue: results.finalValue,
+                      monthlyContribution: parseFloat(monthlyContribution) || 0,
+                      startingCapital: parseFloat(startingCapital) || 0,
+                      targetAmount: parseFloat(targetAmount) || 0,
+                      growthScenario: selectedScenario.charAt(0).toUpperCase() + selectedScenario.slice(1),
+                      projectionMode: projectionMode,
+                      planType: 'goal'
+                    }}
+                    aiSummary={aiSummary}
+                    chartImageData={chartImageData}
+                  />
+                }
+                fileName={`${(goalName || 'Financial-Goal').replace(/[^a-zA-Z0-9]/g, '-')}-Report.pdf`}
+                className="calculate-button"
+                style={{
+                  background: 'linear-gradient(135deg, #007BFF, #0056b3)',
+                  fontSize: '1.1rem',
+                  padding: '1rem 2rem',
+                  textTransform: 'uppercase',
+                  letterSpacing: '1px',
+                  fontWeight: '700',
+                  textDecoration: 'none',
+                  display: 'inline-block',
+                  borderRadius: '8px',
+                  color: 'white',
+                  transition: 'all 0.3s ease'
+                }}
+              >
+                {({ blob, url, loading, error }) =>
+                  loading ? '📥 Preparing Download...' : '📥 Download Report'
+                }
+              </PDFDownloadLink>
+            </div>
+          )}
         </div>
       )}
 

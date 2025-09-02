@@ -1,7 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, ReferenceLine } from 'recharts';
+import { PDFDownloadLink } from '@react-pdf/renderer';
+import html2canvas from 'html2canvas';
+import ReportDocument from './ReportDocument';
 
 const RetirementCalculator = () => {
   const navigate = useNavigate();
@@ -69,6 +72,17 @@ const RetirementCalculator = () => {
   const [retirementData, setRetirementData] = useState([]); // Phase 2: 30-year retirement simulation
   const [results, setResults] = useState(null);
 
+  // Report generation states
+  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
+  const [reportReady, setReportReady] = useState(false);
+  const [aiSummary, setAiSummary] = useState('');
+  const [reportError, setReportError] = useState('');
+  const [reportPlanName, setReportPlanName] = useState(''); // Separate state for report generation
+  const [chartImageData, setChartImageData] = useState('');
+  
+  // Chart reference for capturing
+  const chartRef = useRef(null);
+
   // Fetch Bitcoin price from CoinGecko API on component mount
   useEffect(() => {
     fetchBitcoinPrice();
@@ -80,6 +94,10 @@ const RetirementCalculator = () => {
       setResults(null);
       setAccumulationData([]);
       setRetirementData([]);
+      setReportReady(false);
+      setAiSummary('');
+      setReportError('');
+      setReportPlanName(''); // Clear report plan name when results change
     }
   }, [retirementStrategy, selectedScenario, monthlyContribution]);
 
@@ -336,6 +354,79 @@ const RetirementCalculator = () => {
   // Format percentage
   const formatPercent = (num) => {
     return parseFloat(num).toFixed(1);
+  };
+
+  // Capture chart as image
+  const captureChart = async () => {
+    if (chartRef.current) {
+      try {
+        const canvas = await html2canvas(chartRef.current, {
+          backgroundColor: '#1E1E1E',
+          scale: 2
+        });
+        return canvas.toDataURL('image/png');
+      } catch (error) {
+        console.error('Error capturing chart:', error);
+        return null;
+      }
+    }
+    return null;
+  };
+
+  // Generate AI-powered report
+  const generateReport = async () => {
+    if (!results || !reportPlanName.trim()) {
+      alert('Please calculate a retirement plan and provide a plan name first.');
+      return;
+    }
+
+    setIsGeneratingReport(true);
+    setReportError('');
+
+    try {
+      // Capture chart image first
+      const chartImage = await captureChart();
+      setChartImageData(chartImage || '');
+      
+      const reportData = {
+        goalName: reportPlanName.trim(),
+        timeHorizon: yearsUntilRetirement,
+        finalValue: results.projectedPortfolio,
+        monthlyContribution: monthlyContribution,
+        startingCapital: parseFloat(startingBTC) * parseFloat(bitcoinPrice) || 0,
+        growthScenario: selectedScenario.charAt(0).toUpperCase() + selectedScenario.slice(1),
+        retirementStrategy: retirementStrategy,
+        targetAmount: results.requiredPortfolio
+      };
+
+      const response = await fetch('/api/generateReport', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(reportData)
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      if (data.success) {
+        setAiSummary(data.summary);
+        setReportReady(true);
+      } else {
+        throw new Error(data.error || 'Failed to generate report');
+      }
+    } catch (error) {
+      console.error('Error generating report:', error);
+      setReportError('Failed to generate AI summary. You can still download the report with basic information.');
+      setAiSummary('This retirement plan analysis shows your projected path to financial independence through Bitcoin investment. Your disciplined approach of regular contributions combined with long-term holding strategy positions you well for meeting your retirement goals.');
+      setReportReady(true);
+    } finally {
+      setIsGeneratingReport(false);
+    }
   };
 
   // Goal saving functions for dashboard integration
@@ -727,6 +818,119 @@ const RetirementCalculator = () => {
               🚀 Start My Plan
             </button>
           </div>
+
+          {/* Generate Report Section */}
+          <div className="report-generation-section" style={{ marginTop: '2rem', padding: '1.5rem', backgroundColor: '#2A2A2A', borderRadius: '12px', border: '1px solid #444' }}>
+            <h4 style={{ color: '#FF8C00', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              📊 Generate Detailed Report
+            </h4>
+            <p style={{ color: '#BDBDBD', marginBottom: '1.5rem', lineHeight: '1.5' }}>
+              Create a comprehensive PDF report with AI-powered analysis of your retirement strategy. Perfect for sharing with financial advisors or keeping for your records.
+            </p>
+            
+            <div className="goal-name-input" style={{ marginBottom: '1rem' }}>
+              <label style={{ display: 'block', color: '#EAEAEA', marginBottom: '0.5rem', fontWeight: '600' }}>
+                Plan Name *
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. My Bitcoin Retirement Plan"
+                value={reportPlanName}
+                onChange={(e) => setReportPlanName(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  border: '2px solid #555',
+                  borderRadius: '8px',
+                  backgroundColor: '#1E1E1E',
+                  color: '#EAEAEA',
+                  fontSize: '1rem'
+                }}
+              />
+            </div>
+            
+            {reportError && (
+              <div style={{
+                backgroundColor: '#3d2914',
+                border: '1px solid #8B4513',
+                borderRadius: '8px',
+                padding: '1rem',
+                marginBottom: '1rem',
+                color: '#FFD700'
+              }}>
+                ⚠️ {reportError}
+              </div>
+            )}
+            
+            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+              <button
+                onClick={generateReport}
+                disabled={isGeneratingReport || !reportPlanName.trim()}
+                style={{
+                  padding: '1rem 1.5rem',
+                  backgroundColor: isGeneratingReport || !reportPlanName.trim() ? '#444' : '#007BFF',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: isGeneratingReport || !reportPlanName.trim() ? 'not-allowed' : 'pointer',
+                  fontSize: '1rem',
+                  fontWeight: '600',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem'
+                }}
+              >
+                {isGeneratingReport ? (
+                  <>
+                    <span className="loading-spinner">⏳</span>
+                    Generating Report...
+                  </>
+                ) : (
+                  <>
+                    🤖 Generate AI Report
+                  </>
+                )}
+              </button>
+              
+              {reportReady && (
+                <PDFDownloadLink 
+                  document={
+                    <ReportDocument 
+                      planData={{
+                        goalName: reportPlanName.trim(),
+                        timeHorizon: yearsUntilRetirement,
+                        finalValue: results.projectedPortfolio,
+                        monthlyContribution: monthlyContribution,
+                        startingCapital: parseFloat(startingBTC) * parseFloat(bitcoinPrice) || 0,
+                        targetAmount: results.requiredPortfolio,
+                        growthScenario: selectedScenario.charAt(0).toUpperCase() + selectedScenario.slice(1),
+                        retirementStrategy: retirementStrategy,
+                        planType: 'retirement'
+                      }} 
+                      aiSummary={aiSummary}
+                      chartImageData={chartImageData}
+                    />
+                  }
+                  fileName={`${reportPlanName.trim().replace(/[^a-zA-Z0-9]/g, '_')}_Retirement_Plan.pdf`}
+                  style={{
+                    padding: '1rem 1.5rem',
+                    backgroundColor: '#28a745',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    textDecoration: 'none',
+                    fontSize: '1rem',
+                    fontWeight: '600',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem'
+                  }}
+                >
+                  {({ loading }) => loading ? 'Preparing PDF...' : '📄 Download PDF Report'}
+                </PDFDownloadLink>
+              )}
+            </div>
+          </div>
         </div>
       )}
 
@@ -816,6 +1020,7 @@ const RetirementCalculator = () => {
       {accumulationData.length > 0 && (
         <div className="chart-container">
           <h3 className="chart-title">Chart 1: Accumulation Phase - Path to Retirement</h3>
+          <div ref={chartRef}>
           <ResponsiveContainer width="100%" height={400}>
             <LineChart data={accumulationData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#333" />
@@ -859,6 +1064,7 @@ const RetirementCalculator = () => {
               />
             </LineChart>
           </ResponsiveContainer>
+          </div>
         </div>
       )}
 

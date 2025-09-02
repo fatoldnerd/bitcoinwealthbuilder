@@ -3518,7 +3518,7 @@ body {
 /* Dropdown Menu */
 .dropdown-menu {
   position: absolute;
-  top: 100%;
+  top: calc(100% - 1px); /* Seamless connection with button */
   left: 0;
   background: #2A2A2A;
   border: 1px solid #444;
@@ -3527,8 +3527,20 @@ body {
   z-index: 1000;
   min-width: 220px;
   padding: 0.5rem 0;
-  margin-top: 0.5rem;
+  padding-top: 0.75rem; /* Extra padding for hover area */
+  margin-top: 0; /* Remove gap */
   animation: dropdownFadeIn 0.2s ease;
+}
+
+/* Invisible hover bridge to prevent dropdown from closing */
+.dropdown-menu::before {
+  content: '';
+  position: absolute;
+  top: -0.75rem; /* Cover the padding area */
+  left: 0;
+  right: 0;
+  height: 0.75rem;
+  background: transparent;
 }
 
 @keyframes dropdownFadeIn {
@@ -3553,6 +3565,11 @@ body {
   border: none;
   width: 100%;
   font-size: 0.95rem;
+}
+
+/* Adjust first dropdown item to account for extra top padding */
+.dropdown-item:first-child {
+  margin-top: -0.25rem;
 }
 
 .dropdown-item:hover {
