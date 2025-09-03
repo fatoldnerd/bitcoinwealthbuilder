@@ -5,9 +5,11 @@
   "description": "Bitcoin financial planning calculators",
   "main": "index.js",
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
+    "start": "craco start",
+    "dev:vercel": "vercel dev",
+    "dev:frontend": "craco start",
+    "build": "craco build",
+    "test": "craco test",
     "eject": "react-scripts eject"
   },
   "keywords": [],
@@ -34,5 +36,11 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "@craco/craco": "^7.1.0",
+    "buffer": "^6.0.3",
+    "http-proxy-middleware": "^3.0.5",
+    "process": "^0.11.10"
   }
 }

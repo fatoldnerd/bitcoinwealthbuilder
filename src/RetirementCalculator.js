@@ -388,46 +388,88 @@ const RetirementCalculator = () => {
       const chartImage = await captureChart();
       setChartImageData(chartImage || '');
       
+      // Validate that required data arrays exist
+      if (!Array.isArray(accumulationData) || accumulationData.length === 0) {
+        throw new Error('Accumulation data is missing or empty. Please calculate a retirement plan first.');
+      }
+      
+      if (!Array.isArray(retirementData) || retirementData.length === 0) {
+        throw new Error('Retirement data is missing or empty. Please calculate a retirement plan first.');
+      }
+      
       // Combine accumulation and retirement data for comprehensive insight analysis
       const combinedChartData = [];
       
-      // Add accumulation phase data (years 0 to yearsUntilRetirement)
-      accumulationData.forEach(dataPoint => {
-        combinedChartData.push({
-          year: dataPoint.year,
-          portfolioValue: dataPoint.portfolioValue,
-          month: dataPoint.year * 12, // Convert to months for consistency
-          phase: 'accumulation'
-        });
-      });
-      
-      // Add retirement phase data (offset by accumulation years)
-      retirementData.forEach((dataPoint, index) => {
-        if (index > 0) { // Skip the first point to avoid duplication
+      try {
+        // Add accumulation phase data (years 0 to yearsUntilRetirement) with safe property access
+        accumulationData.forEach((dataPoint, index) => {
+          if (!dataPoint) {
+            console.warn(`Skipping undefined accumulation data point at index ${index}`);
+            return;
+          }
+          
+          const year = dataPoint.year ?? 0;
+          const portfolioValue = dataPoint.portfolioValue ?? 0;
+          
           combinedChartData.push({
-            year: yearsUntilRetirement + dataPoint.year,
-            portfolioValue: dataPoint.portfolioValue || (dataPoint.btcHoldings * dataPoint.price),
-            month: (yearsUntilRetirement + dataPoint.year) * 12,
-            phase: 'retirement',
-            retirementYear: dataPoint.year,
-            ltvRatio: dataPoint.ltvRatio,
-            strategy: retirementStrategy
+            year: year,
+            portfolioValue: portfolioValue,
+            month: year * 12, // Convert to months for consistency
+            phase: 'accumulation'
           });
-        }
-      });
+        });
+        
+        // Add retirement phase data (offset by accumulation years) with safe property access
+        retirementData.forEach((dataPoint, index) => {
+          if (!dataPoint) {
+            console.warn(`Skipping undefined retirement data point at index ${index}`);
+            return;
+          }
+          
+          if (index > 0) { // Skip the first point to avoid duplication
+            const dataPointYear = dataPoint.year ?? 0;
+            const btcHoldings = dataPoint.btcHoldings ?? 0;
+            const price = dataPoint.price ?? 0;
+            const portfolioValue = dataPoint.portfolioValue ?? (btcHoldings * price);
+            
+            combinedChartData.push({
+              year: (yearsUntilRetirement ?? 0) + dataPointYear,
+              portfolioValue: portfolioValue,
+              month: ((yearsUntilRetirement ?? 0) + dataPointYear) * 12,
+              phase: 'retirement',
+              retirementYear: dataPointYear,
+              ltvRatio: dataPoint.ltvRatio ?? 0,
+              strategy: retirementStrategy || 'sell'
+            });
+          }
+        });
+        
+      } catch (dataProcessingError) {
+        console.error('Error processing chart data:', dataProcessingError);
+        throw new Error(`Failed to process simulation data: ${dataProcessingError.message}`);
+      }
       
+      // Safely construct report data with validation
       const reportData = {
-        goalName: reportPlanName.trim(),
-        timeHorizon: yearsUntilRetirement,
-        finalValue: results.projectedPortfolio,
-        monthlyContribution: monthlyContribution,
-        startingCapital: parseFloat(startingBTC) * parseFloat(bitcoinPrice) || 0,
-        growthScenario: selectedScenario.charAt(0).toUpperCase() + selectedScenario.slice(1),
-        retirementStrategy: retirementStrategy,
-        targetAmount: results.requiredPortfolio,
+        goalName: (reportPlanName || '').trim() || 'Retirement Plan',
+        timeHorizon: yearsUntilRetirement ?? 20,
+        finalValue: results?.projectedPortfolio ?? 0,
+        monthlyContribution: monthlyContribution ?? 0,
+        startingCapital: (() => {
+          const btcAmount = parseFloat(startingBTC || '0');
+          const btcPrice = parseFloat(bitcoinPrice || '0');
+          return isNaN(btcAmount) || isNaN(btcPrice) ? 0 : btcAmount * btcPrice;
+        })(),
+        growthScenario: selectedScenario ? 
+          selectedScenario.charAt(0).toUpperCase() + selectedScenario.slice(1) : 
+          'Moderate',
+        retirementStrategy: retirementStrategy || 'sell',
+        targetAmount: results?.requiredPortfolio ?? 0,
         projectionMode: 'retirement-planning',
         chartData: combinedChartData // Send detailed projection data for insight analysis
       };
+
+      console.log("--- DEBUG: Data Packet from Retirement Calculator ---", reportData);
 
       const response = await fetch('/api/generateReport', {
         method: 'POST',
@@ -451,7 +493,27 @@ const RetirementCalculator = () => {
       }
     } catch (error) {
       console.error('Error generating report:', error);
-      setReportError('Failed to generate AI summary. You can still download the report with basic information.');
+      console.error('Error details:', {
+        message: error.message,
+        stack: error.stack,
+        accumulationDataLength: accumulationData?.length ?? 'undefined',
+        retirementDataLength: retirementData?.length ?? 'undefined',
+        resultsExist: !!results,
+        reportPlanNameExists: !!reportPlanName
+      });
+      
+      // Provide more specific error messages based on error type
+      let errorMessage = 'Failed to generate AI summary.';
+      
+      if (error.message.includes('data is missing')) {
+        errorMessage = 'Please calculate a retirement plan before generating a report.';
+      } else if (error.message.includes('HTTP error')) {
+        errorMessage = 'Network error while generating report. Please try again.';
+      } else if (error.message.includes('simulation data')) {
+        errorMessage = 'Error processing calculation data. Please recalculate your retirement plan.';
+      }
+      
+      setReportError(errorMessage + ' You can still download the report with basic information.');
       setAiSummary('This retirement plan analysis shows your projected path to financial independence through Bitcoin investment. Your disciplined approach of regular contributions combined with long-term holding strategy positions you well for meeting your retirement goals.');
       setReportReady(true);
     } finally {
