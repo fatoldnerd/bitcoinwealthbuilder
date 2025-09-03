@@ -287,6 +287,88 @@ const styles = StyleSheet.create({
   },
 });
 
+// Helper function to dynamically render financial overview rows
+const renderFinancialOverviewRows = (planData, formatCurrency) => {
+  const rows = [];
+  let rowIndex = 0;
+  
+  // Define the data mapping with labels and formatting
+  const dataConfig = [
+    { 
+      key: 'goalName', 
+      label: 'Plan Name', 
+      format: (value) => value,
+      condition: () => true 
+    },
+    { 
+      key: 'timeHorizon', 
+      label: 'Time Horizon', 
+      format: (value) => `${value} years`,
+      condition: () => true 
+    },
+    { 
+      key: 'monthlyContribution', 
+      label: 'Monthly Contribution', 
+      format: (value) => formatCurrency(value),
+      condition: () => true 
+    },
+    { 
+      key: 'startingCapital', 
+      label: 'Starting Capital', 
+      format: (value) => formatCurrency(value),
+      condition: (value) => value && value > 0 
+    },
+    { 
+      key: 'targetAmount', 
+      label: 'Target Amount', 
+      format: (value) => formatCurrency(value),
+      condition: (value) => value && value > 0 
+    },
+    { 
+      key: 'growthScenario', 
+      label: 'Growth Scenario', 
+      format: (value) => value,
+      condition: () => true 
+    },
+    { 
+      key: 'retirementStrategy', 
+      label: 'Strategy', 
+      format: (value) => value === 'sell' ? 'Sell for Income' : 'Borrow for Income',
+      condition: (value) => value 
+    },
+    { 
+      key: 'finalValue', 
+      label: 'Projected Final Value', 
+      format: (value) => formatCurrency(value),
+      condition: () => true,
+      isHighlight: true 
+    }
+  ];
+  
+  // Filter and render rows based on conditions
+  const validRows = dataConfig.filter(config => {
+    const value = planData[config.key];
+    return config.condition(value);
+  });
+  
+  validRows.forEach((config, index) => {
+    const value = planData[config.key];
+    const isLastRow = index === validRows.length - 1;
+    
+    rows.push(
+      <View key={rowIndex} style={isLastRow ? styles.tableRowLast : styles.tableRow}>
+        <Text style={styles.tableLabel}>{config.label}</Text>
+        <Text style={config.isHighlight ? styles.tableValueHighlight : styles.tableValue}>
+          {config.format(value)}
+        </Text>
+      </View>
+    );
+    rowIndex++;
+  });
+  
+  return rows;
+};
+
 const ReportDocument = ({ planData, aiSummary, chartImageData }) => {
   // Format currency for display
   const formatCurrency = (amount) => {
@@ -425,51 +507,8 @@ const ReportDocument = ({ planData, aiSummary, chartImageData }) => {
               <View style={styles.financialTable}>
                 <Text style={styles.tableHeader}>Financial Overview</Text>
                 
-                <View style={styles.tableRow}>
-                  <Text style={styles.tableLabel}>Plan Name</Text>
-                  <Text style={styles.tableValue}>{planData.goalName}</Text>
-                </View>
-                
-                <View style={styles.tableRow}>
-                  <Text style={styles.tableLabel}>Time Horizon</Text>
-                  <Text style={styles.tableValue}>{planData.timeHorizon} years</Text>
-                </View>
-                
-                <View style={styles.tableRow}>
-                  <Text style={styles.tableLabel}>Monthly Contribution</Text>
-                  <Text style={styles.tableValue}>{formatCurrency(planData.monthlyContribution)}</Text>
-                </View>
-                
-                {planData.startingCapital > 0 && (
-                  <View style={styles.tableRow}>
-                    <Text style={styles.tableLabel}>Starting Capital</Text>
-                    <Text style={styles.tableValue}>{formatCurrency(planData.startingCapital)}</Text>
-                  </View>
-                )}
-                
-                {planData.targetAmount && (
-                  <View style={styles.tableRow}>
-                    <Text style={styles.tableLabel}>Target Amount</Text>
-                    <Text style={styles.tableValue}>{formatCurrency(planData.targetAmount)}</Text>
-                  </View>
-                )}
-                
-                <View style={styles.tableRow}>
-                  <Text style={styles.tableLabel}>Growth Scenario</Text>
-                  <Text style={styles.tableValue}>{planData.growthScenario}</Text>
-                </View>
-                
-                {planData.retirementStrategy && (
-                  <View style={styles.tableRow}>
-                    <Text style={styles.tableLabel}>Strategy</Text>
-                    <Text style={styles.tableValue}>{planData.retirementStrategy === 'sell' ? 'Sell for Income' : 'Borrow for Income'}</Text>
-                  </View>
-                )}
-                
-                <View style={styles.tableRowLast}>
-                  <Text style={styles.tableLabel}>Projected Final Value</Text>
-                  <Text style={styles.tableValueHighlight}>{formatCurrency(planData.finalValue)}</Text>
-                </View>
+                {/* Dynamic table rendering based on plan data */}
+                {renderFinancialOverviewRows(planData, formatCurrency)}
               </View>
             </View>
           </View>

@@ -388,6 +388,34 @@ const RetirementCalculator = () => {
       const chartImage = await captureChart();
       setChartImageData(chartImage || '');
       
+      // Combine accumulation and retirement data for comprehensive insight analysis
+      const combinedChartData = [];
+      
+      // Add accumulation phase data (years 0 to yearsUntilRetirement)
+      accumulationData.forEach(dataPoint => {
+        combinedChartData.push({
+          year: dataPoint.year,
+          portfolioValue: dataPoint.portfolioValue,
+          month: dataPoint.year * 12, // Convert to months for consistency
+          phase: 'accumulation'
+        });
+      });
+      
+      // Add retirement phase data (offset by accumulation years)
+      retirementData.forEach((dataPoint, index) => {
+        if (index > 0) { // Skip the first point to avoid duplication
+          combinedChartData.push({
+            year: yearsUntilRetirement + dataPoint.year,
+            portfolioValue: dataPoint.portfolioValue || (dataPoint.btcHoldings * dataPoint.price),
+            month: (yearsUntilRetirement + dataPoint.year) * 12,
+            phase: 'retirement',
+            retirementYear: dataPoint.year,
+            ltvRatio: dataPoint.ltvRatio,
+            strategy: retirementStrategy
+          });
+        }
+      });
+      
       const reportData = {
         goalName: reportPlanName.trim(),
         timeHorizon: yearsUntilRetirement,
@@ -396,7 +424,9 @@ const RetirementCalculator = () => {
         startingCapital: parseFloat(startingBTC) * parseFloat(bitcoinPrice) || 0,
         growthScenario: selectedScenario.charAt(0).toUpperCase() + selectedScenario.slice(1),
         retirementStrategy: retirementStrategy,
-        targetAmount: results.requiredPortfolio
+        targetAmount: results.requiredPortfolio,
+        projectionMode: 'retirement-planning',
+        chartData: combinedChartData // Send detailed projection data for insight analysis
       };
 
       const response = await fetch('/api/generateReport', {
