@@ -483,10 +483,8 @@ const RetirementCalculator = () => {
         retirementStrategy: retirementStrategy || 'sell',
         targetAmount: results?.requiredPortfolio ?? 0,
         projectionMode: 'retirement-planning',
-        chartData: combinedChartData // Send detailed projection data for insight analysis
+        chartData: accumulationData
       };
-
-      console.log("--- DEBUG: Data Packet from Retirement Calculator ---", reportData);
 
       const response = await fetch('/api/generateReport', {
         method: 'POST',

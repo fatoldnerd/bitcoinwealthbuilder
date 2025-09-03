@@ -1,15 +1,6 @@
 {
-  "buildCommand": "craco build",
   "devCommand": "craco start",
-  "installCommand": "npm install",
-  "rewrites": [
-    {
-      "source": "/api/(.*)",
-      "destination": "/api/$1"
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/"
-    }
-  ]
+  "framework": null,
+  "buildCommand": "craco build",
+  "outputDirectory": "build"
 }
