@@ -221,6 +221,24 @@ const UserGuide = () => {
                     </tbody>
                   </table>
                 </div>
+
+                <h4>How to Use</h4>
+                <ol>
+                  <li><strong>Choose Retirement Strategy:</strong> Select between "Sell for Income" (gradually sell Bitcoin) or "Borrow for Income" (use Bitcoin as collateral for loans)</li>
+                  <li><strong>Set Bitcoin Holdings:</strong> Enter your current Bitcoin amount and the current Bitcoin price (use the "Refresh" button for live pricing)</li>
+                  <li><strong>Configure Spending Plan:</strong> Set your desired annual income for each retirement phase:
+                    <ul>
+                      <li>Active Years (first 10): Higher spending for travel and activities</li>
+                      <li>Slowing Down (next 10): Moderate spending as you settle into routine</li>
+                      <li>Later Years (remaining): Lower, predictable expenses</li>
+                    </ul>
+                  </li>
+                  <li><strong>Set Timeline:</strong> Use the sliders to choose how many years until you retire and how long your retirement will last</li>
+                  <li><strong>Add Contributions:</strong> Enter your planned monthly Bitcoin investment amount during your working years (set to 0 if no regular contributions)</li>
+                  <li><strong>Select Growth Scenario:</strong> Choose Conservative, Moderate, Optimistic, or Custom to set your Bitcoin growth assumptions and other economic factors</li>
+                  <li><strong>Calculate:</strong> Review your results including portfolio requirements, strategy viability, and projected timeline</li>
+                  <li><strong>Save to Dashboard:</strong> Click "Start My Plan" to begin tracking your retirement preparation progress</li>
+                </ol>
                 
                 <div style={{ textAlign: 'center', marginTop: '1rem' }}>
                   <button 
