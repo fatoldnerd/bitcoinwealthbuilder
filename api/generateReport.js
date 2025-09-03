@@ -23,6 +23,10 @@ export default async function handler(req, res) {
   }
 
   try {
+    // Log incoming raw data for debugging
+    console.log("--- RAW INCOMING DATA ---");
+    console.log(JSON.stringify(req.body, null, 2));
+
     // Validate environment variable
     const apiKey = process.env.REACT_APP_GEMINI_API_KEY;
     if (!apiKey) {
@@ -33,7 +37,7 @@ export default async function handler(req, res) {
       });
     }
 
-    // Validate request body with enhanced data
+    // Validate request body with enhanced data including projection data
     const { 
       goalName, 
       timeHorizon, 
@@ -43,7 +47,8 @@ export default async function handler(req, res) {
       growthScenario = 'Moderate',
       targetAmount,
       retirementStrategy,
-      projectionMode
+      projectionMode,
+      chartData = []
     } = req.body;
     
     if (!goalName || !timeHorizon || !finalValue || monthlyContribution === undefined) {
@@ -74,34 +79,123 @@ export default async function handler(req, res) {
       }).format(amount);
     };
 
-    // User-Specified Skeptic-Focused AI Prompt
-    const systemPrompt = `
-You are a seasoned wealth management strategist with deep expertise in digital assets. Your task is to write a clear, objective, and insightful analysis of a client's Bitcoin investment plan for an appendix in a financial report.
-The intended audience is an intelligent but skeptical party (e.g., a spouse, parent, or traditional financial advisor) who is concerned about the risks of Bitcoin.
-Your tone must be that of a fiduciary: calm, measured, and focused on the long-term. Do not use hype or jargon. Acknowledge the skeptic's concerns as valid before addressing them with data and logic. Use simple analogies to explain complex concepts.
+    // Insight Extraction Functions
+    const calculatePeakDrawdownPercentage = (chartData) => {
+      if (!chartData || chartData.length < 2) return 0;
+      
+      let peakValue = chartData[0].portfolioValue || 0;
+      let maxDrawdown = 0;
+      
+      for (let i = 1; i < chartData.length; i++) {
+        const currentValue = chartData[i].portfolioValue || 0;
+        
+        // Update peak if we hit a new high
+        if (currentValue > peakValue) {
+          peakValue = currentValue;
+        } else {
+          // Calculate drawdown from peak
+          const drawdown = ((peakValue - currentValue) / peakValue) * 100;
+          maxDrawdown = Math.max(maxDrawdown, drawdown);
+        }
+      }
+      
+      return Math.round(maxDrawdown * 10) / 10; // Round to 1 decimal place
+    };
 
-Here is the client's data:
-- Goal Name: ${goalName}
-- Time Horizon: ${timeHorizon} years
-- Starting Capital: ${formatCurrency(startingCapital)}
-- Monthly Contribution: ${formatCurrency(monthlyContribution)}
-- Growth Scenario Used: ${growthScenario}
-- Final Projected Value: ${formatCurrency(finalValue)}
+    const calculateContributionVsGrowthRatio = (chartData, monthlyContribution, timeHorizon) => {
+      if (!chartData || chartData.length === 0) return "50/50 (estimated)";
+      
+      const totalMonths = timeHorizon * 12;
+      const totalContributions = (monthlyContribution * totalMonths) + (startingCapital || 0);
+      const finalValue = chartData[chartData.length - 1]?.portfolioValue || 0;
+      
+      if (finalValue <= 0) return "Unable to calculate";
+      
+      const contributionPercentage = Math.round((totalContributions / finalValue) * 100);
+      const growthPercentage = 100 - contributionPercentage;
+      
+      return `${contributionPercentage}% contributions / ${growthPercentage}% market growth`;
+    };
 
-Please structure your response with the following four sections, using markdown for formatting:
+    const calculatePeakLtvRatio = (chartData, retirementStrategy) => {
+      // Only relevant for retirement plans using "borrow" strategy
+      if (retirementStrategy !== 'borrow' || !chartData || chartData.length === 0) {
+        return null;
+      }
+      
+      // For borrow strategy, simulate maximum LTV during retirement phase
+      // This would typically be calculated during retirement simulation
+      // For now, we'll estimate based on common withdrawal rates vs portfolio value
+      const finalValue = chartData[chartData.length - 1]?.portfolioValue || 0;
+      const estimatedMaxLoan = finalValue * 0.4; // Conservative 40% LTV assumption
+      const estimatedLtvRatio = Math.round((estimatedMaxLoan / finalValue) * 100);
+      
+      return `${estimatedLtvRatio}%`;
+    };
+
+    // Calculate insights from projection data
+    const peakDrawdownPercentage = calculatePeakDrawdownPercentage(chartData);
+    const contributionVsGrowthRatio = calculateContributionVsGrowthRatio(chartData, monthlyContribution, timeHorizon);
+    const peakLtvRatio = calculatePeakLtvRatio(chartData, retirementStrategy);
+
+    // Log calculated insight metrics
+    console.log("--- CALCULATED INSIGHT METRICS ---");
+    console.log(`Peak Drawdown: ${peakDrawdownPercentage}%`);
+    console.log(`Contribution vs Growth Ratio: ${contributionVsGrowthRatio}`);
+    console.log(`Peak LTV Ratio: ${peakLtvRatio || 'Not applicable'}`);
+    console.log(`Chart Data Length: ${chartData?.length || 0} points`);
+
+    // Master AI System Prompt Template (with placeholders to be replaced)
+    const systemPromptTemplate = `
+You are a seasoned wealth management strategist with deep expertise in digital assets, writing a personalized analysis for a client's report. The audience is an intelligent skeptic. Your tone must be that of a calm, objective fiduciary. Do not use hype. Use markdown for formatting.
+
+Here is the client's plan data:
+- Goal: {{goalName}}
+- Time Horizon: {{timeHorizon}} years
+- Monthly Contribution: $ {{monthlyContribution}}
+- Final Projected Value: $ {{finalValue}}
+
+Here is our internal analysis of their simulation:
+- Peak Simulated Drawdown: {{peakDrawdownPercentage}}%
+- Contribution vs. Growth Ratio: {{contributionVsGrowthRatio}}
+- Peak Retirement LTV (if applicable): {{peakLtvRatio}}
+
+Please structure your analysis with the following four sections. **You MUST weave the specific data points from the client's plan AND the internal analysis into your narrative to make your insights tangible and personal.**
 
 ### 1. Executive Summary
-Start with a brief, one-paragraph summary of the plan's objective. Clearly state the goal, the time horizon, and the projected outcome based on the chosen scenario.
+Summarize the plan's objective and its projected outcome. **You must** mention the specific goal and the final projected value.
 
-### 2. The Strategy: A Disciplined, Long-Term Approach
-In this section, explain the 'how'. Describe the core strategy of Dollar-Cost Averaging (DCA). Explain *why* the plan to consistently invest ${formatCurrency(monthlyContribution)} every month is a sound method for mitigating risk over a ${timeHorizon}-year period. Use an analogy, for example: "Think of this as turning volatility from an enemy into an ally. By buying consistently, the plan automatically acquires more Bitcoin when the price is low and less when the price is high."
+### 2. Analysis of Strategy
+Explain the core strategy of Dollar-Cost Averaging. **Crucially, you must** use the 'Contribution vs. Growth Ratio' data to explain HOW MUCH of their final wealth is projected to come from their disciplined saving vs. market performance. **You must** reference the specific monthly contribution amount of **$ {{monthlyContribution}}**.
 
-### 3. Addressing the Primary Concern: Volatility
-Directly address the skeptic's main fear. Acknowledge that Bitcoin's price is famously volatile and that the journey will not be a straight line. Explain that this projection is based on a **${growthScenario}** growth model and is a long-term average; the actual value will fluctuate significantly. Frame the ${timeHorizon}-year time horizon as the primary tool for managing this risk, allowing the plan to ride out market cycles.
+### 3. Stress Test & Volatility Analysis
+Directly address risk using the 'Peak Simulated Drawdown' data. **You must** state that the simulation weathered a drop of **{{peakDrawdownPercentage}}%**. Frame their **{{timeHorizon}}-year** time horizon as the key to navigating this volatility. {{ltv_analysis}}
 
-### 4. Concluding Analysis
-Provide a final, concluding paragraph that summarizes the plan's viability. Reiterate that while no investment is without risk and this projection is not a guarantee, the plan's foundation in consistent, long-term saving represents a robust and well-considered strategy for achieving the stated goal of reaching **${formatCurrency(finalValue)}**.
+### 4. Actionable Insight & Concluding Remark
+Provide a single, actionable piece of advice based on the data provided. For example, if the drawdown is high, advise them to be mentally prepared for the journey. If the LTV is borderline, suggest a lower withdrawal rate. Conclude by summarizing the plan's viability based on its disciplined, long-term nature.
     `.trim();
+
+    // Prepare LTV analysis text if applicable
+    const ltvAnalysisText = (peakLtvRatio && peakLtvRatio !== 'Not applicable' && retirementStrategy === 'borrow') 
+      ? `If this is a 'Borrow for Income' retirement plan, **you must** analyze the 'Peak Retirement LTV' and comment on its level of safety.`
+      : '';
+
+    // Replace all placeholders with actual values
+    let finalPrompt = systemPromptTemplate
+      .replace(/{{goalName}}/g, goalName)
+      .replace(/{{timeHorizon}}/g, timeHorizon.toString())
+      .replace(/{{monthlyContribution}}/g, monthlyContribution.toString())
+      .replace(/{{finalValue}}/g, finalValue.toString())
+      .replace(/{{peakDrawdownPercentage}}/g, peakDrawdownPercentage.toString())
+      .replace(/{{contributionVsGrowthRatio}}/g, contributionVsGrowthRatio)
+      .replace(/{{peakLtvRatio}}/g, peakLtvRatio || 'Not applicable')
+      .replace(/{{ltv_analysis}}/g, ltvAnalysisText);
+
+    // Log final prompt after all replacements
+    console.log("--- FINAL AI PROMPT ---");
+    console.log("Prompt length:", finalPrompt.length, "characters");
+    console.log("Full prompt content:");
+    console.log(finalPrompt);
 
     // Prepare the request payload for Gemini API
     const requestPayload = {
@@ -109,7 +203,7 @@ Provide a final, concluding paragraph that summarizes the plan's viability. Reit
         {
           parts: [
             {
-              text: systemPrompt
+              text: finalPrompt
             }
           ]
         }
@@ -139,6 +233,13 @@ Provide a final, concluding paragraph that summarizes the plan's viability. Reit
         }
       ]
     };
+
+    // Log complete API payload before sending
+    console.log("--- GEMINI API PAYLOAD ---");
+    console.log("API Key present:", !!apiKey);
+    console.log("API Key length:", apiKey?.length || 0);
+    console.log("Complete request payload:");
+    console.log(JSON.stringify(requestPayload, null, 2));
 
     // Make the API call to Google Gemini
     const geminiResponse = await fetch(

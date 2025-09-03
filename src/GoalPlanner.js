@@ -217,7 +217,7 @@ const GoalPlanner = () => {
       const scenario = getCurrentScenario();
       const scenarioName = selectedScenario.charAt(0).toUpperCase() + selectedScenario.slice(1);
       
-      // Gather comprehensive plan data
+      // Gather comprehensive plan data including chart data for insight extraction
       const planData = {
         goalName: goalName.trim(),
         timeHorizon: parseInt(timeHorizon),
@@ -226,7 +226,8 @@ const GoalPlanner = () => {
         startingCapital: parseFloat(startingCapital) || 0,
         growthScenario: scenarioName,
         projectionMode: projectionMode,
-        targetAmount: parseFloat(targetAmount) || 0
+        targetAmount: parseFloat(targetAmount) || 0,
+        chartData: chartData // Send detailed projection data for insight analysis
       };
       
       // Call our serverless function
