@@ -138,26 +138,88 @@ const UserGuide = () => {
                   for decades without a regular paycheck.
                 </p>
                 
-                <h4>Key Feature: Two Retirement Strategies</h4>
+                <h4>Key Features</h4>
                 <div className="strategy-comparison-grid">
+                  {/* Card for Strategy Comparison */}
                   <div className="strategy-comparison-card">
-                    <h4>🔽 "Sell for Income"</h4>
-                    <p>Gradually sell portions of your Bitcoin to fund retirement</p>
-                    <ul>
-                      <li>Simple and straightforward</li>
-                      <li>No debt or interest payments</li>
-                      <li>Bitcoin holdings decrease over time</li>
-                    </ul>
+                    <h4>🔽 "Sell vs. Borrow" Strategies</h4>
+                    <p>Compare two distinct retirement funding models: gradually selling your Bitcoin or using it as collateral to borrow against.</p>
                   </div>
+                  {/* NEW Card for Spending Plan */}
                   <div className="strategy-comparison-card">
-                    <h4>💰 "Borrow for Income"</h4>
-                    <p>Use Bitcoin as collateral for loans instead of selling</p>
-                    <ul>
-                      <li>Preserve your Bitcoin holdings</li>
-                      <li>Benefit from continued appreciation</li>
-                      <li>Requires careful LTV management</li>
-                    </ul>
+                    <h4>📈 Phase-Based Spending Plan</h4>
+                    <p>Model a realistic retirement by setting different annual spending amounts for the "Active," "Slowing Down," and "Later" years of your life.</p>
                   </div>
+                </div>
+
+                <h4>How the Retirement Spending Plan Works</h4>
+                <p>
+                  Financial planners recognize that retirement spending is not flat; it changes as you age. Our calculator models this reality using three distinct phases:
+                </p>
+                <ul>
+                  <li>
+                    <strong>Active Years (First 10):</strong> Represents the "Go-Go" years right after retirement. This is typically when you're most active, travel is frequent, and spending is at its peak.
+                  </li>
+                  <li>
+                    <strong>Slowing Down (Next 10):</strong> Represents the "Slow-Go" years. You might travel less and settle into a more routine, less expensive lifestyle.
+                  </li>
+                  <li>
+                    <strong>Later Years (Remaining):</strong> Represents the "No-Go" years. Expenses are often at their lowest and most predictable, primarily focused on living costs and healthcare.
+                  </li>
+                </ul>
+                <p>
+                  By setting different income needs for each phase, you create a far more realistic and sustainable retirement projection.
+                </p>
+
+                <h4>How the Logic Adapts to Your Timeline</h4>
+                <p>
+                  The calculator is smart enough to apply these spending phases correctly based on the total "Retirement Duration" you select. The first two phases are fixed at 10 years each, while the third "Later Years" phase is flexible.
+                </p>
+                <p><strong>Example Scenarios:</strong></p>
+                <ul>
+                  <li><strong>If your duration is 25 years:</strong> The calculator uses "Active" spending for years 1-10, "Slowing Down" for years 11-20, and "Later Years" for the final 5 years (21-25).</li>
+                  <li><strong>If your duration is 40 years:</strong> It uses the first two phases as normal, and the "Later Years" phase automatically expands to cover the final 20 years (21-40).</li>
+                  <li><strong>If your duration is only 15 years:</strong> It uses "Active" spending for years 1-10 and "Slowing Down" for years 11-15. The "Later Years" phase is never reached.</li>
+                </ul>
+
+                <div className="overview-card" style={{marginTop: '1rem'}}>
+                  <h5 style={{textAlign: 'center', marginBottom: '1rem'}}>Logic Summary</h5>
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Retirement Duration</th>
+                        <th>Years 1-10 Use...</th>
+                        <th>Years 11-20 Use...</th>
+                        <th>Years 21+ Use...</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><strong>25 Years</strong></td>
+                        <td>✅ "Active"</td>
+                        <td>✅ "Slowing Down"</td>
+                        <td>✅ "Later" (for Years 21-25)</td>
+                      </tr>
+                      <tr>
+                        <td><strong>40 Years</strong></td>
+                        <td>✅ "Active"</td>
+                        <td>✅ "Slowing Down"</td>
+                        <td>✅ "Later" (for Years 21-40)</td>
+                      </tr>
+                       <tr>
+                        <td><strong>15 Years</strong></td>
+                        <td>✅ "Active"</td>
+                        <td>✅ "Slowing Down" (for Years 11-15)</td>
+                        <td>❌ (Not Reached)</td>
+                      </tr>
+                      <tr>
+                        <td><strong>10 Years</strong></td>
+                        <td>✅ "Active"</td>
+                        <td>❌ (Not Reached)</td>
+                        <td>❌ (Not Reached)</td>
+                      </tr>
+                    </tbody>
+                  </table>
                 </div>
                 
                 <div style={{ textAlign: 'center', marginTop: '1rem' }}>
