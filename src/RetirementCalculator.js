@@ -19,7 +19,12 @@ const RetirementCalculator = () => {
   const [isLoadingPrice, setIsLoadingPrice] = useState(false); // Loading state for price fetch
   const [yearsUntilRetirement, setYearsUntilRetirement] = useState(20); // Replaced age inputs with direct years
   const [retirementDuration, setRetirementDuration] = useState(30); // Customizable retirement period duration
-  const [desiredRetirementIncome, setDesiredRetirementIncome] = useState(120000); // Annual income needed in retirement
+  // Phase-based retirement spending plan - models changing expenses throughout retirement
+  const [spendingPlan, setSpendingPlan] = useState({
+    active: 120000,     // Active years (first 10): Higher travel and activity expenses
+    slow: 90000,        // Slowing down (next 10): Reduced activity but maintaining lifestyle
+    later: 75000        // Later years (remaining): Lower overall expenses
+  });
   const [monthlyContribution, setMonthlyContribution] = useState(0); // Dollar-cost averaging monthly contribution
   
   // Scenario selector state - controls all rate-based assumptions
@@ -144,7 +149,8 @@ const RetirementCalculator = () => {
   // Calculate required retirement portfolio based on desired income and withdrawal rate
   const calculateRequiredRetirementPortfolio = () => {
     const assumptions = getCurrentAssumptions();
-    return desiredRetirementIncome / (assumptions.withdrawalRate / 100);
+    // Use the active phase income for initial portfolio requirement calculation
+    return spendingPlan.active / (assumptions.withdrawalRate / 100);
   };
 
   // Main calculation function - orchestrates both phases of retirement planning
@@ -244,7 +250,6 @@ const RetirementCalculator = () => {
     const data = [];
     let currentBTC = startingBTC;
     let currentLoanPrincipal = 0;
-    let currentIncome = desiredRetirementIncome;
     let viable = true;
     let yearsUntilDepletion = null;
     
@@ -253,9 +258,21 @@ const RetirementCalculator = () => {
       const price = startPrice * Math.pow(1 + assumptions.postRetirementBitcoinGrowth / 100, year);
       const portfolioValue = currentBTC * price;
       
-      // Adjust income for inflation each year
+      // Determine base income based on retirement phase
+      let baseIncome;
+      if (year <= 10) {
+        baseIncome = spendingPlan.active;
+      } else if (year <= 20) {
+        baseIncome = spendingPlan.slow;
+      } else {
+        baseIncome = spendingPlan.later;
+      }
+      
+      // Apply inflation adjustment to base income
+      let currentIncome = baseIncome;
       if (year > 0) {
-        currentIncome *= (1 + assumptions.inflationRate / 100);
+        // Apply compound inflation from year 1 of retirement
+        currentIncome = baseIncome * Math.pow(1 + assumptions.inflationRate / 100, year);
       }
       
       if (retirementStrategy === 'sell') {
@@ -281,7 +298,7 @@ const RetirementCalculator = () => {
           price,
           btcHoldings: currentBTC,
           portfolioValue: currentBTC * price,
-          annualIncome: year === 0 ? 0 : currentIncome,
+          annualIncome: currentIncome,
           strategy: 'sell'
         });
         
@@ -319,7 +336,7 @@ const RetirementCalculator = () => {
           portfolioValue,
           loanPrincipal: currentLoanPrincipal,
           ltvRatio: portfolioValue > 0 ? (currentLoanPrincipal / portfolioValue) * 100 : 0,
-          annualIncome: year === 0 ? 0 : currentIncome,
+          annualIncome: currentIncome,
           strategy: 'borrow'
         });
       }
@@ -598,106 +615,327 @@ const RetirementCalculator = () => {
       </div>
       
       <div className="calculator-form">
-        {/* Simplified Core Inputs - Reduced from many fields to essentials */}
+        {/* Main Input Grid - Better proportioned two column layout */}
         <div className="core-inputs-section">
-          <div className="form-group">
-            <label className="form-label">Starting Bitcoin Amount (BTC)</label>
-            <input
-              type="number"
-              className="form-input"
-              value={startingBTC}
-              onChange={(e) => setStartingBTC(e.target.value)}
-              placeholder="Enter Bitcoin amount"
-              min="0"
-              step="0.00000001"
-            />
-          </div>
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: '350px 1fr', 
+            gap: '3rem',
+            marginBottom: '3rem',
+            alignItems: 'start'
+          }}>
+            {/* Left Column: Bitcoin Holdings & Price - Fixed width */}
+            <div style={{ minWidth: '350px' }}>
+              <div className="form-group">
+                <label className="form-label">Starting Bitcoin Amount (BTC)</label>
+                <input
+                  type="number"
+                  className="form-input"
+                  value={startingBTC}
+                  onChange={(e) => setStartingBTC(e.target.value)}
+                  placeholder="Enter Bitcoin amount"
+                  min="0"
+                  step="0.00000001"
+                />
+              </div>
 
-          <div className="form-group">
-            <label className="form-label">
-              Current Bitcoin Price ($)
-              <button 
-                type="button"
-                onClick={fetchBitcoinPrice}
-                style={{
-                  marginLeft: '10px',
-                  padding: '4px 8px',
-                  fontSize: '12px',
-                  background: '#007BFF',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer'
-                }}
-                disabled={isLoadingPrice}
-              >
-                {isLoadingPrice ? 'Loading...' : 'Refresh'}
-              </button>
-            </label>
-            <input
-              type="number"
-              className="form-input"
-              value={bitcoinPrice}
-              onChange={(e) => setBitcoinPrice(e.target.value)}
-              placeholder="Enter Bitcoin price"
-              min="0"
-              step="0.01"
-            />
-          </div>
+              <div className="form-group">
+                <label className="form-label">
+                  Current Bitcoin Price ($)
+                  <button 
+                    type="button"
+                    onClick={fetchBitcoinPrice}
+                    style={{
+                      marginLeft: '10px',
+                      padding: '4px 8px',
+                      fontSize: '12px',
+                      background: '#007BFF',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: 'pointer'
+                    }}
+                    disabled={isLoadingPrice}
+                  >
+                    {isLoadingPrice ? 'Loading...' : 'Refresh'}
+                  </button>
+                </label>
+                <input
+                  type="number"
+                  className="form-input"
+                  value={bitcoinPrice}
+                  onChange={(e) => setBitcoinPrice(e.target.value)}
+                  placeholder="Enter Bitcoin price"
+                  min="0"
+                  step="0.01"
+                />
+              </div>
+            </div>
 
-          {/* Desired Retirement Income */}
-          <div className="form-group">
-            <label className="form-label">Desired Annual Retirement Income ($)</label>
-            <input
-              type="number"
-              className="form-input"
-              value={desiredRetirementIncome}
-              onChange={(e) => setDesiredRetirementIncome(parseFloat(e.target.value))}
-              placeholder="Enter desired income"
-              min="0"
-              step="1000"
-            />
-          </div>
-          
-          {/* Years Until Retirement Slider - Replaces separate age inputs */}
-          <div className="form-group">
-            <label className="form-label">Years Until Retirement: {yearsUntilRetirement}</label>
-            <input
-              type="range"
-              className="form-slider"
-              min="5"
-              max="40"
-              value={yearsUntilRetirement}
-              onChange={(e) => setYearsUntilRetirement(parseInt(e.target.value))}
-            />
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#666' }}>
-              <span>5 years</span>
-              <span>40 years</span>
+            {/* Right Column: Retirement Spending Plan - Takes remaining space */}
+            <div style={{ 
+              backgroundColor: '#2A2A2A',
+              border: '1px solid #444',
+              borderRadius: '12px',
+              padding: '2rem',
+              minWidth: 0
+            }}>
+              <h3 style={{
+                fontSize: '1.3rem',
+                fontWeight: '600',
+                color: '#EAEAEA',
+                marginBottom: '0.75rem',
+                marginTop: 0
+              }}>
+                Retirement Spending Plan
+              </h3>
+              <p style={{ 
+                color: '#BDBDBD', 
+                marginBottom: '2rem', 
+                fontSize: '0.95rem',
+                lineHeight: '1.5'
+              }}>
+                Define your estimated annual spending for different stages of your retirement. Amounts are in today's dollars.
+              </p>
+              
+              {/* Three-Card Layout - More compact */}
+              <div style={{ 
+                display: 'grid', 
+                gridTemplateColumns: 'repeat(3, 1fr)', 
+                gap: '1.25rem' 
+              }}>
+                {/* Active Years Card */}
+                <div style={{
+                  backgroundColor: '#1E1E1E',
+                  borderRadius: '8px',
+                  padding: '1.25rem 0.75rem',
+                  textAlign: 'center',
+                  border: '1px solid #555',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  minHeight: '100px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center'
+                }}>
+                  <div style={{
+                    fontSize: '0.8rem',
+                    color: '#BDBDBD',
+                    marginBottom: '0.5rem',
+                    fontWeight: '500',
+                    lineHeight: '1.2'
+                  }}>
+                    Active Years (First 10)
+                  </div>
+                  <input
+                    type="number"
+                    value={spendingPlan.active}
+                    onChange={(e) => setSpendingPlan(prev => ({...prev, active: parseFloat(e.target.value) || 0}))}
+                    style={{
+                      backgroundColor: 'transparent',
+                      border: 'none',
+                      outline: 'none',
+                      color: '#EAEAEA',
+                      fontSize: '1.3rem',
+                      fontWeight: 'bold',
+                      textAlign: 'center',
+                      width: '100%',
+                      fontFamily: 'inherit'
+                    }}
+                    min="0"
+                    step="1000"
+                    onFocus={(e) => {
+                      e.target.style.backgroundColor = 'rgba(255, 140, 0, 0.1)';
+                      e.target.parentElement.style.borderColor = '#FF8C00';
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.backgroundColor = 'transparent';
+                      e.target.parentElement.style.borderColor = '#555';
+                    }}
+                  />
+                </div>
+
+                {/* Slowing Down Card */}
+                <div style={{
+                  backgroundColor: '#1E1E1E',
+                  borderRadius: '8px',
+                  padding: '1.25rem 0.75rem',
+                  textAlign: 'center',
+                  border: '1px solid #555',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  minHeight: '100px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center'
+                }}>
+                  <div style={{
+                    fontSize: '0.8rem',
+                    color: '#BDBDBD',
+                    marginBottom: '0.5rem',
+                    fontWeight: '500',
+                    lineHeight: '1.2'
+                  }}>
+                    Slowing Down (Next 10)
+                  </div>
+                  <input
+                    type="number"
+                    value={spendingPlan.slow}
+                    onChange={(e) => setSpendingPlan(prev => ({...prev, slow: parseFloat(e.target.value) || 0}))}
+                    style={{
+                      backgroundColor: 'transparent',
+                      border: 'none',
+                      outline: 'none',
+                      color: '#EAEAEA',
+                      fontSize: '1.3rem',
+                      fontWeight: 'bold',
+                      textAlign: 'center',
+                      width: '100%',
+                      fontFamily: 'inherit'
+                    }}
+                    min="0"
+                    step="1000"
+                    onFocus={(e) => {
+                      e.target.style.backgroundColor = 'rgba(255, 140, 0, 0.1)';
+                      e.target.parentElement.style.borderColor = '#FF8C00';
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.backgroundColor = 'transparent';
+                      e.target.parentElement.style.borderColor = '#555';
+                    }}
+                  />
+                </div>
+
+                {/* Later Years Card */}
+                <div style={{
+                  backgroundColor: '#1E1E1E',
+                  borderRadius: '8px',
+                  padding: '1.25rem 0.75rem',
+                  textAlign: 'center',
+                  border: '1px solid #555',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  minHeight: '100px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center'
+                }}>
+                  <div style={{
+                    fontSize: '0.8rem',
+                    color: '#BDBDBD',
+                    marginBottom: '0.5rem',
+                    fontWeight: '500',
+                    lineHeight: '1.2'
+                  }}>
+                    Later Years (Remaining)
+                  </div>
+                  <input
+                    type="number"
+                    value={spendingPlan.later}
+                    onChange={(e) => setSpendingPlan(prev => ({...prev, later: parseFloat(e.target.value) || 0}))}
+                    style={{
+                      backgroundColor: 'transparent',
+                      border: 'none',
+                      outline: 'none',
+                      color: '#EAEAEA',
+                      fontSize: '1.3rem',
+                      fontWeight: 'bold',
+                      textAlign: 'center',
+                      width: '100%',
+                      fontFamily: 'inherit'
+                    }}
+                    min="0"
+                    step="1000"
+                    onFocus={(e) => {
+                      e.target.style.backgroundColor = 'rgba(255, 140, 0, 0.1)';
+                      e.target.parentElement.style.borderColor = '#FF8C00';
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.backgroundColor = 'transparent';
+                      e.target.parentElement.style.borderColor = '#555';
+                    }}
+                  />
+                </div>
+              </div>
             </div>
           </div>
+        </div>
+        
+        {/* Timeline Sliders - Separate section with proper spacing */}
+        <div style={{ 
+          backgroundColor: '#2A2A2A',
+          border: '1px solid #444',
+          borderRadius: '12px',
+          padding: '2rem',
+          marginBottom: '2rem'
+        }}>
+          <h3 style={{
+            fontSize: '1.3rem',
+            fontWeight: '600',
+            color: '#EAEAEA',
+            marginBottom: '1.5rem',
+            marginTop: 0
+          }}>
+            Timeline Configuration
+          </h3>
           
-          {/* Retirement Duration Slider - New feature for customizable retirement period */}
-          <div className="form-group">
-            <label className="form-label">Retirement Duration (in years): {retirementDuration}</label>
-            <input
-              type="range"
-              className="form-slider"
-              min="10"
-              max="50"
-              value={retirementDuration}
-              onChange={(e) => setRetirementDuration(parseInt(e.target.value))}
-            />
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#666' }}>
-              <span>10 years</span>
-              <span>50 years</span>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gap: '2rem'
+          }}>
+            <div className="form-group" style={{ margin: 0 }}>
+              <label className="form-label">Years Until Retirement: {yearsUntilRetirement}</label>
+              <input
+                type="range"
+                className="form-slider"
+                min="5"
+                max="40"
+                value={yearsUntilRetirement}
+                onChange={(e) => setYearsUntilRetirement(parseInt(e.target.value))}
+              />
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#666', marginTop: '0.5rem' }}>
+                <span>5 years</span>
+                <span>40 years</span>
+              </div>
+            </div>
+            
+            <div className="form-group" style={{ margin: 0 }}>
+              <label className="form-label">Retirement Duration (in years): {retirementDuration}</label>
+              <input
+                type="range"
+                className="form-slider"
+                min="10"
+                max="50"
+                value={retirementDuration}
+                onChange={(e) => setRetirementDuration(parseInt(e.target.value))}
+              />
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#666', marginTop: '0.5rem' }}>
+                <span>10 years</span>
+                <span>50 years</span>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Contribution Plan Section - New DCA Feature */}
-        <div className="contribution-plan-section">
-          <h3 className="scenarios-title">Contribution Plan</h3>
-          <div className="form-group">
+        {/* Contribution Plan Section - Enhanced styling */}
+        <div style={{
+          backgroundColor: '#2A2A2A',
+          border: '1px solid #444',
+          borderRadius: '12px',
+          padding: '2rem',
+          marginBottom: '2rem'
+        }}>
+          <h3 style={{
+            fontSize: '1.3rem',
+            fontWeight: '600',
+            color: '#EAEAEA',
+            marginBottom: '1.5rem',
+            marginTop: 0
+          }}>
+            💰 Contribution Plan
+          </h3>
+          <div className="form-group" style={{ margin: 0 }}>
             <label className="form-label">Regular Monthly Contribution ($)</label>
             <input
               type="number"
@@ -707,17 +945,40 @@ const RetirementCalculator = () => {
               placeholder="Enter monthly contribution"
               min="0"
               step="100"
+              style={{ marginBottom: '1rem' }}
             />
-            <div className="input-help">
-              Enter the dollar amount you plan to invest in Bitcoin each month during the accumulation phase. Set to 0 for no regular contributions.
+            <div style={{
+              color: '#BDBDBD',
+              fontSize: '0.9rem',
+              lineHeight: '1.4',
+              padding: '1rem',
+              backgroundColor: '#1E1E1E',
+              borderRadius: '8px',
+              border: '1px solid #555'
+            }}>
+              💡 Enter the dollar amount you plan to invest in Bitcoin each month during the accumulation phase. Set to 0 for no regular contributions.
             </div>
           </div>
         </div>
 
-        {/* Scenario Selector - Bundles all rate-based assumptions */}
-        <div className="scenario-section">
-          <h3 className="scenarios-title">Scenario</h3>
-          <div className="scenario-buttons">
+        {/* Scenario Selector - Enhanced styling */}
+        <div style={{
+          backgroundColor: '#2A2A2A',
+          border: '1px solid #444',
+          borderRadius: '12px',
+          padding: '2rem',
+          marginBottom: '2rem'
+        }}>
+          <h3 style={{
+            fontSize: '1.3rem',
+            fontWeight: '600',
+            color: '#EAEAEA',
+            marginBottom: '1.5rem',
+            marginTop: 0
+          }}>
+            📊 Growth Scenario
+          </h3>
+          <div className="scenario-buttons" style={{ marginBottom: '1.5rem' }}>
             {Object.keys(scenarios).map(scenario => (
               <button
                 key={scenario}
@@ -730,30 +991,73 @@ const RetirementCalculator = () => {
           </div>
           
           {/* Show current scenario assumptions for transparency */}
-          <div className="scenario-display">
-            <h4>Current Assumptions:</h4>
-            <div className="assumptions-grid">
-              <div>Inflation Rate: {getCurrentAssumptions().inflationRate}%</div>
-              <div>Bitcoin Growth Rate: {getCurrentAssumptions().bitcoinGrowthRate}%</div>
+          <div style={{
+            backgroundColor: '#1E1E1E',
+            borderRadius: '8px',
+            padding: '1.5rem',
+            border: '1px solid #555'
+          }}>
+            <h4 style={{
+              color: '#FF8C00',
+              marginBottom: '1rem',
+              marginTop: 0,
+              fontSize: '1rem',
+              fontWeight: '600'
+            }}>
+              Current Assumptions:
+            </h4>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+              gap: '0.75rem',
+              fontSize: '0.9rem'
+            }}>
+              <div style={{ color: '#BDBDBD' }}>Inflation Rate: <span style={{ color: '#EAEAEA', fontWeight: '600' }}>{getCurrentAssumptions().inflationRate}%</span></div>
+              <div style={{ color: '#BDBDBD' }}>Bitcoin Growth Rate: <span style={{ color: '#EAEAEA', fontWeight: '600' }}>{getCurrentAssumptions().bitcoinGrowthRate}%</span></div>
               {retirementStrategy === 'sell' && (
-                <div>Withdrawal Rate: {getCurrentAssumptions().withdrawalRate}%</div>
+                <div style={{ color: '#BDBDBD' }}>Withdrawal Rate: <span style={{ color: '#EAEAEA', fontWeight: '600' }}>{getCurrentAssumptions().withdrawalRate}%</span></div>
               )}
               {retirementStrategy === 'borrow' && (
-                <div>Target Annual LTV: {getCurrentAssumptions().targetAnnualLTV}%</div>
+                <div style={{ color: '#BDBDBD' }}>Target Annual LTV: <span style={{ color: '#EAEAEA', fontWeight: '600' }}>{getCurrentAssumptions().targetAnnualLTV}%</span></div>
               )}
-              <div>Loan Interest Rate: {getCurrentAssumptions().loanInterestRate}%</div>
-              <div>Post-Retirement BTC Growth: {getCurrentAssumptions().postRetirementBitcoinGrowth}%</div>
+              <div style={{ color: '#BDBDBD' }}>Loan Interest Rate: <span style={{ color: '#EAEAEA', fontWeight: '600' }}>{getCurrentAssumptions().loanInterestRate}%</span></div>
+              <div style={{ color: '#BDBDBD' }}>Post-Retirement BTC Growth: <span style={{ color: '#EAEAEA', fontWeight: '600' }}>{getCurrentAssumptions().postRetirementBitcoinGrowth}%</span></div>
             </div>
           </div>
         </div>
 
-        {/* Custom Parameters - Only show when Custom scenario is selected */}
+        {/* Custom Parameters - Enhanced styling when Custom scenario is selected */}
         {selectedScenario === 'custom' && (
-          <div className="custom-params-section">
-            <h3 className="scenarios-title">Custom Parameters</h3>
-            <div className="custom-grid">
+          <div style={{
+            backgroundColor: '#2A2A2A',
+            border: '1px solid #444',
+            borderRadius: '12px',
+            padding: '2rem',
+            marginBottom: '2rem'
+          }}>
+            <h3 style={{
+              fontSize: '1.3rem',
+              fontWeight: '600',
+              color: '#EAEAEA',
+              marginBottom: '1.5rem',
+              marginTop: 0
+            }}>
+              ⚙️ Custom Parameters
+            </h3>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+              gap: '1.5rem'
+            }}>
               <div className="custom-item">
-                <label>Inflation Rate (%)</label>
+                <label style={{
+                  display: 'block',
+                  color: '#EAEAEA',
+                  marginBottom: '0.5rem',
+                  fontWeight: '500'
+                }}>
+                  Inflation Rate (%)
+                </label>
                 <input
                   type="number"
                   className="custom-input"
@@ -762,11 +1066,27 @@ const RetirementCalculator = () => {
                   min="0"
                   max="20"
                   step="0.1"
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    border: '2px solid #555',
+                    borderRadius: '8px',
+                    backgroundColor: '#1E1E1E',
+                    color: '#EAEAEA',
+                    fontSize: '1rem'
+                  }}
                 />
               </div>
               
               <div className="custom-item">
-                <label>Bitcoin Growth Rate (%)</label>
+                <label style={{
+                  display: 'block',
+                  color: '#EAEAEA',
+                  marginBottom: '0.5rem',
+                  fontWeight: '500'
+                }}>
+                  Bitcoin Growth Rate (%)
+                </label>
                 <input
                   type="number"
                   className="custom-input"
@@ -775,13 +1095,29 @@ const RetirementCalculator = () => {
                   min="0"
                   max="100"
                   step="1"
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    border: '2px solid #555',
+                    borderRadius: '8px',
+                    backgroundColor: '#1E1E1E',
+                    color: '#EAEAEA',
+                    fontSize: '1rem'
+                  }}
                 />
               </div>
               
               {/* Show Withdrawal Rate only for Sell strategy */}
               {retirementStrategy === 'sell' && (
                 <div className="custom-item">
-                  <label>Withdrawal Rate (%)</label>
+                  <label style={{
+                    display: 'block',
+                    color: '#EAEAEA',
+                    marginBottom: '0.5rem',
+                    fontWeight: '500'
+                  }}>
+                    Withdrawal Rate (%)
+                  </label>
                   <input
                     type="number"
                     className="custom-input"
@@ -790,6 +1126,15 @@ const RetirementCalculator = () => {
                     min="0"
                     max="10"
                     step="0.1"
+                    style={{
+                      width: '100%',
+                      padding: '0.75rem',
+                      border: '2px solid #555',
+                      borderRadius: '8px',
+                      backgroundColor: '#1E1E1E',
+                      color: '#EAEAEA',
+                      fontSize: '1rem'
+                    }}
                   />
                 </div>
               )}
@@ -797,7 +1142,14 @@ const RetirementCalculator = () => {
               {/* Show Target Annual LTV only for Borrow strategy */}
               {retirementStrategy === 'borrow' && (
                 <div className="custom-item">
-                  <label>Target Annual LTV (%)</label>
+                  <label style={{
+                    display: 'block',
+                    color: '#EAEAEA',
+                    marginBottom: '0.5rem',
+                    fontWeight: '500'
+                  }}>
+                    Target Annual LTV (%)
+                  </label>
                   <input
                     type="number"
                     className="custom-input"
@@ -806,12 +1158,28 @@ const RetirementCalculator = () => {
                     min="5"
                     max="50"
                     step="1"
+                    style={{
+                      width: '100%',
+                      padding: '0.75rem',
+                      border: '2px solid #555',
+                      borderRadius: '8px',
+                      backgroundColor: '#1E1E1E',
+                      color: '#EAEAEA',
+                      fontSize: '1rem'
+                    }}
                   />
                 </div>
               )}
               
               <div className="custom-item">
-                <label>Loan Interest Rate (%)</label>
+                <label style={{
+                  display: 'block',
+                  color: '#EAEAEA',
+                  marginBottom: '0.5rem',
+                  fontWeight: '500'
+                }}>
+                  Loan Interest Rate (%)
+                </label>
                 <input
                   type="number"
                   className="custom-input"
@@ -820,11 +1188,27 @@ const RetirementCalculator = () => {
                   min="0"
                   max="20"
                   step="0.1"
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    border: '2px solid #555',
+                    borderRadius: '8px',
+                    backgroundColor: '#1E1E1E',
+                    color: '#EAEAEA',
+                    fontSize: '1rem'
+                  }}
                 />
               </div>
               
               <div className="custom-item">
-                <label>Post-Retirement BTC Growth (%)</label>
+                <label style={{
+                  display: 'block',
+                  color: '#EAEAEA',
+                  marginBottom: '0.5rem',
+                  fontWeight: '500'
+                }}>
+                  Post-Retirement BTC Growth (%)
+                </label>
                 <input
                   type="number"
                   className="custom-input"
@@ -833,18 +1217,53 @@ const RetirementCalculator = () => {
                   min="0"
                   max="50"
                   step="1"
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    border: '2px solid #555',
+                    borderRadius: '8px',
+                    backgroundColor: '#1E1E1E',
+                    color: '#EAEAEA',
+                    fontSize: '1rem'
+                  }}
                 />
               </div>
             </div>
           </div>
         )}
 
-        <button 
-          className="calculate-button"
-          onClick={calculateRetirementProjection}
-        >
-          Calculate Retirement Plan
-        </button>
+        {/* Enhanced Calculate Button */}
+        <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
+          <button 
+            className="calculate-button"
+            onClick={calculateRetirementProjection}
+            style={{
+              background: 'linear-gradient(135deg, #007BFF, #0056b3)',
+              color: 'white',
+              border: 'none',
+              borderRadius: '12px',
+              padding: '1.25rem 3rem',
+              fontSize: '1.2rem',
+              fontWeight: '700',
+              cursor: 'pointer',
+              textTransform: 'uppercase',
+              letterSpacing: '1px',
+              boxShadow: '0 4px 15px rgba(0, 123, 255, 0.3)',
+              transition: 'all 0.3s ease',
+              minWidth: '300px'
+            }}
+            onMouseOver={(e) => {
+              e.target.style.transform = 'translateY(-2px)';
+              e.target.style.boxShadow = '0 6px 20px rgba(0, 123, 255, 0.4)';
+            }}
+            onMouseOut={(e) => {
+              e.target.style.transform = 'translateY(0)';
+              e.target.style.boxShadow = '0 4px 15px rgba(0, 123, 255, 0.3)';
+            }}
+          >
+            🚀 Calculate Retirement Plan
+          </button>
+        </div>
       </div>
 
       {/* Results Section - Simplified and focused on key insights */}
@@ -1252,6 +1671,17 @@ const RetirementCalculator = () => {
                   <ReferenceLine yAxisId="right" y={75} stroke="#dc3545" strokeDasharray="3 3" label="Danger Zone (75% LTV)" />
                 </>
               )}
+              
+              {/* Annual Income Line - Shows inflation-adjusted spending needs */}
+              <Line 
+                yAxisId="left"
+                type="monotone"
+                dataKey="annualIncome"
+                stroke="#8884d8"
+                strokeWidth={2}
+                strokeDasharray="5 5"
+                name="Annual Income"
+              />
             </LineChart>
           </ResponsiveContainer>
         </div>
