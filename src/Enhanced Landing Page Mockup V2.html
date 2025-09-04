@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bitcoin Wealth Builder - Enhanced Mockup</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        body.modal-open {
+            overflow: hidden;
+        }
+        .hero-gradient {
+            background-image: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0) 70%);
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-gray-300">
+
+    <div class="container mx-auto p-4 md:p-8 max-w-7xl">
+
+        <!-- Navigation Bar -->
+        <nav class="flex justify-between items-center mb-12">
+            <div class="text-xl font-bold text-white">
+                <span class="text-orange-500">B</span> Bitcoin Wealth Builder
+            </div>
+            <div class="hidden md:flex items-center space-x-6 text-sm">
+                <a href="#" class="bg-orange-500 text-white px-3 py-1.5 rounded-md text-xs font-semibold">Home</a>
+                <a href="#" class="hover:text-white">Goal Planner</a>
+                <a href="#" class="hover:text-white">Calculators</a>
+                <a href="#" class="hover:text-white">My Dashboard</a>
+                <a href="#" class="hover:text-white">User Guide</a>
+                <button class="login-trigger bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-semibold">Login</button>
+            </div>
+            <div class="md:hidden flex items-center">
+                <button class="login-trigger bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-md text-sm font-semibold">Login</button>
+                <button class="ml-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-menu"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
+                </button>
+            </div>
+        </nav>
+
+        <!-- Hero Section -->
+        <header class="text-center hero-gradient bg-slate-800/50 p-8 md:p-12 rounded-xl mb-16">
+            <h1 class="text-4xl md:text-5xl font-bold text-white mb-4">Plan Your Bitcoin Future with Confidence</h1>
+            <p class="text-gray-400 max-w-3xl mx-auto">
+                Go beyond simple spreadsheets with a suite of interactive tools designed to help you visualize your long-term wealth, manage risk, and plan for retirement.
+            </p>
+        </header>
+
+        <!-- Main Content -->
+        <main>
+            <!-- Primary Call to Action: Goal Planner -->
+            <section class="mb-16">
+                 <h2 class="text-2xl md:text-3xl font-bold text-center text-white mb-4">Start Your Journey Here</h2>
+                 <p class="text-center text-gray-400 max-w-2xl mx-auto mb-8">The Goal Planner is the perfect starting point for any specific, non-retirement savings goal. Create a plan, save it, and track your progress on your personal dashboard.</p>
+                 <div class="max-w-2xl mx-auto bg-slate-800 p-6 rounded-xl border-t-4 border-purple-500 flex flex-col md:flex-row items-center gap-6">
+                    <div class="mb-4 md:mb-0 bg-slate-700 w-16 h-16 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-flag text-purple-400"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" x2="4" y1="22" y2="15"/></svg>
+                    </div>
+                    <div class="flex-grow text-center md:text-left">
+                        <h3 class="text-xl font-semibold text-white mb-2">Goal Planner</h3>
+                        <p class="text-sm text-gray-400">Set and track your financial goals for a house, car, or emergency fund to stay on target with your Bitcoin strategy.</p>
+                    </div>
+                    <a href="#" class="mt-4 md:mt-0 block w-full md:w-auto flex-shrink-0 text-center bg-purple-500 text-white font-semibold py-2.5 px-6 rounded-lg hover:bg-purple-600 transition-colors">LAUNCH PLANNER</a>
+                </div>
+            </section>
+
+            <!-- Featured Calculators Section -->
+            <section class="mb-16">
+                 <h2 class="text-2xl md:text-3xl font-bold text-center text-white mb-4">Explore Our Core Tools</h2>
+                 <p class="text-center text-gray-400 max-w-2xl mx-auto mb-8">Dive into our specialized calculators for sophisticated retirement planning, risk management, and long-term decision making.</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    
+                    <!-- Retirement Calculator -->
+                    <div class="bg-slate-800 p-6 rounded-xl border-t-4 border-orange-500 flex flex-col">
+                        <div class="flex-grow">
+                            <div class="mb-4 bg-slate-700 w-12 h-12 rounded-lg flex items-center justify-center">
+                               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-umbrella text-orange-400"><path d="M22 12a10.06 10.06 1 0 0-20 0Z"/><path d="M12 12v8a2 2 0 0 0 4 0"/><path d="M12 2v1"/></svg>
+                            </div>
+                            <h3 class="text-lg font-semibold text-white mb-2">Retirement Calculator</h3>
+                            <p class="text-sm text-gray-400">Plan your retirement with "Sell vs. Borrow" strategies and phase-based spending plans.</p>
+                        </div>
+                        <a href="#" class="mt-6 block w-full text-center bg-orange-500 text-white font-semibold py-2.5 rounded-lg hover:bg-orange-600 transition-colors">Plan Retirement</a>
+                    </div>
+                    
+                    <!-- LTV Risk Calculator -->
+                    <div class="bg-slate-800 p-6 rounded-xl border-t-4 border-green-500 flex flex-col">
+                        <div class="flex-grow">
+                            <div class="mb-4 bg-slate-700 w-12 h-12 rounded-lg flex items-center justify-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-scale text-green-400"><path d="m16 16 3-8 3 8c-2 1-4 1-6 0"/><path d="M2 16l3-8 3 8c-2 1-4 1-6 0"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></svg>
+                            </div>
+                            <h3 class="text-lg font-semibold text-white mb-2">LTV Risk Calculator</h3>
+                            <p class="text-sm text-gray-400">Understand borrowing risks and calculate safe loan amounts to avoid liquidation.</p>
+                        </div>
+                        <a href="#" class="mt-6 block w-full text-center bg-green-500 text-white font-semibold py-2.5 rounded-lg hover:bg-green-600 transition-colors">Analyze Risk</a>
+                    </div>
+
+                    <!-- Opportunity Cost Calculator -->
+                    <div class="bg-slate-800 p-6 rounded-xl border-t-4 border-blue-500 flex flex-col">
+                        <div class="flex-grow">
+                             <div class="mb-4 bg-slate-700 w-12 h-12 rounded-lg flex items-center justify-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-git-fork text-blue-400"><circle cx="12" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><circle cx="18" cy="6" r="3"/><path d="M18 9v1a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V9"/><path d="M12 12v3"/></svg>
+                            </div>
+                            <h3 class="text-lg font-semibold text-white mb-2">Opportunity Cost</h3>
+                            <p class="text-sm text-gray-400">See the potential future value of money you're considering spending today.</p>
+                        </div>
+                        <a href="#" class="mt-6 block w-full text-center bg-blue-500 text-white font-semibold py-2.5 rounded-lg hover:bg-blue-600 transition-colors">Calculate Cost</a>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Trust & Features Section -->
+            <section class="bg-slate-800/50 p-8 rounded-xl mb-16">
+                 <div class="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+                    <!-- Privacy First -->
+                    <div class="flex flex-col items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-shield-check text-green-400 mb-2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/></svg>
+                        <h3 class="font-semibold text-white">Privacy First</h3>
+                        <p class="text-xs text-gray-400">All calculations happen in your browser. No data is stored or transmitted.</p>
+                    </div>
+                    <!-- Real-Time Data -->
+                    <div class="flex flex-col items-center">
+                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-line-chart text-blue-400 mb-2"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+                        <h3 class="font-semibold text-white">Real-Time Data</h3>
+                        <p class="text-xs text-gray-400">Live Bitcoin prices from CoinGecko API for accurate, up-to-date calculations.</p>
+                    </div>
+                    <!-- Comprehensive Guide -->
+                    <div class="flex flex-col items-center">
+                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-book-marked text-orange-400 mb-2"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/><path d="m10 12.5-2-2 2-2"/></svg>
+                        <h3 class="font-semibold text-white">Comprehensive Guide</h3>
+                        <p class="text-xs text-gray-400">Detailed documentation and examples to help you make informed decisions.</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Support Section -->
+        <footer class="bg-slate-800/50 p-8 md:p-12 rounded-xl text-center">
+            <h2 class="text-2xl font-bold text-white mb-2">Support This Project</h2>
+            <p class="text-gray-400 max-w-2xl mx-auto mb-8">
+                If you find these tools valuable, please consider supporting their continued development. Thank you!
+            </p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-2xl mx-auto">
+                <!-- On-Chain Bitcoin -->
+                <div class="bg-slate-800 p-6 rounded-lg">
+                    <h3 class="font-semibold text-white mb-4">On-Chain Bitcoin</h3>
+                    <img src="https://placehold.co/200x200/1e293b/e2e8f0?text=QR+Code" alt="On-Chain Bitcoin QR Code" class="mx-auto rounded-md">
+                </div>
+                <!-- Lightning -->
+                <div class="bg-slate-800 p-6 rounded-lg">
+                    <h3 class="font-semibold text-white mb-4">Lightning</h3>
+                    <img src="https://placehold.co/200x200/1e293b/e2e8f0?text=QR+Code" alt="Lightning QR Code" class="mx-auto rounded-md">
+                </div>
+            </div>
+        </footer>
+
+    </div>
+
+    <!-- Login Modal -->
+    <div id="login-modal" class="fixed inset-0 bg-black bg-opacity-70 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-800 p-8 rounded-xl shadow-2xl w-full max-w-md m-4 relative border border-slate-700">
+            <!-- Close Button -->
+            <button id="close-modal-btn" class="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+
+            <h2 class="text-2xl font-bold text-white text-center mb-6">Welcome Back</h2>
+            
+            <!-- Social Logins First -->
+            <div class="space-y-4 mb-6">
+                <button class="w-full bg-slate-700 text-white font-semibold py-2.5 rounded-lg hover:bg-slate-600 transition-colors flex items-center justify-center">
+                    <svg class="w-5 h-5 mr-3" viewBox="0 0 48 48">
+                        <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12s5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24s8.955,20,20,20s20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"></path><path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"></path><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.222,0-9.657-3.444-11.28-8.161l-6.522,5.025C9.505,39.556,16.227,44,24,44z"></path><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571l6.19,5.238C42.011,35.188,44,30.013,44,24C44,22.659,43.862,21.35,43.611,20.083z"></path>
+                    </svg>
+                    Continue with Google
+                </button>
+                 <button class="w-full bg-slate-700 text-white font-semibold py-2.5 rounded-lg hover:bg-slate-600 transition-colors flex items-center justify-center">
+                    <svg class="w-5 h-5 mr-3" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path>
+                    </svg>
+                    Continue with GitHub
+                </button>
+            </div>
+
+            <div class="flex items-center my-4">
+                <hr class="w-full border-slate-600">
+                <span class="px-2 text-xs text-gray-500 uppercase">Or sign in with email</span>
+                <hr class="w-full border-slate-600">
+            </div>
+
+            <form>
+                <div class="mb-4">
+                    <label for="email" class="sr-only">Email</label>
+                    <input type="email" id="email" name="email" class="w-full bg-slate-700 border border-slate-600 text-white rounded-lg px-3 py-2 focus:ring-2 focus:ring-orange-500 focus:outline-none" placeholder="you@example.com">
+                </div>
+                <div class="mb-6">
+                    <label for="password" class="sr-only">Password</label>
+                    <input type="password" id="password" name="password" class="w-full bg-slate-700 border border-slate-600 text-white rounded-lg px-3 py-2 focus:ring-2 focus:ring-orange-500 focus:outline-none" placeholder="••••••••">
+                </div>
+                <button type="submit" class="w-full bg-orange-500 text-white font-semibold py-2.5 rounded-lg hover:bg-orange-600 transition-colors mb-4">
+                    Login
+                </button>
+            </form>
+            
+            <p class="text-center text-sm text-gray-400 mt-6">
+                Don't have an account? <a href="#" class="text-orange-400 hover:underline font-semibold">Sign Up</a>
+            </p>
+
+        </div>
+    </div>
+
+    <script>
+        // JS for modal - same as before
+    </script>
+</body>
+</html>
+
