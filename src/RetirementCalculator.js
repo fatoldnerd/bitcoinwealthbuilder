@@ -615,13 +615,7 @@ const RetirementCalculator = () => {
       <div className="calculator-form">
         {/* Main Input Grid - Better proportioned two column layout */}
         <div className="core-inputs-section">
-          <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: '350px 1fr', 
-            gap: '3rem',
-            marginBottom: '3rem',
-            alignItems: 'start'
-          }}>
+          <div className="main-input-grid">
             {/* Left Column: Bitcoin Holdings & Price - Fixed width */}
             <div style={{ minWidth: '350px' }}>
               <div className="form-group">
@@ -697,11 +691,7 @@ const RetirementCalculator = () => {
               </p>
               
               {/* Three-Card Layout - More compact */}
-              <div style={{ 
-                display: 'grid', 
-                gridTemplateColumns: 'repeat(3, 1fr)', 
-                gap: '1.25rem' 
-              }}>
+              <div className="spending-plan-grid">
                 {/* Active Years Card */}
                 <div style={{
                   backgroundColor: '#1E1E1E',
@@ -877,11 +867,7 @@ const RetirementCalculator = () => {
             Timeline Configuration
           </h3>
           
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            gap: '2rem'
-          }}>
+          <div className="timeline-grid">
             <div className="form-group" style={{ margin: 0 }}>
               <label className="form-label">Years Until Retirement: {yearsUntilRetirement}</label>
               <input

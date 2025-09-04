@@ -3795,3 +3795,49 @@ body {
     right: 0;
   }
 }
+
+/* === Mobile Responsive Fixes for Retirement Calculator === */
+
+/* Main Input Grid: Stacks the 'Starting BTC' and 'Spending Plan' sections on mobile */
+.main-input-grid {
+  display: grid;
+  grid-template-columns: 1fr; /* Default to a single column for mobile */
+  gap: 3rem;
+  align-items: start;
+  margin-bottom: 3rem;
+}
+
+/* On screens larger than 1024px (laptops/desktops), switch to two columns */
+@media (min-width: 1024px) {
+  .main-input-grid {
+    grid-template-columns: 350px 1fr;
+  }
+}
+
+/* Spending Plan Cards: Stacks the 3 spending cards vertically on mobile */
+.spending-plan-grid {
+  display: grid;
+  grid-template-columns: 1fr; /* Default to a single column for mobile */
+  gap: 1.25rem;
+}
+
+/* On screens larger than 768px (tablets and up), switch to three columns */
+@media (min-width: 768px) {
+  .spending-plan-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Timeline Sliders: Stacks the two sliders vertically on mobile */
+.timeline-grid {
+  display: grid;
+  grid-template-columns: 1fr; /* Default to a single column for mobile */
+  gap: 2rem;
+}
+
+/* On screens larger than 768px (tablets and up), switch to two columns */
+@media (min-width: 768px) {
+  .timeline-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
