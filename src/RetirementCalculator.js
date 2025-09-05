@@ -672,15 +672,28 @@ const RetirementCalculator = () => {
               padding: '2rem',
               minWidth: 0
             }}>
-              <h3 style={{
-                fontSize: '1.3rem',
-                fontWeight: '600',
-                color: '#EAEAEA',
-                marginBottom: '0.75rem',
-                marginTop: 0
-              }}>
-                Retirement Spending Plan
-              </h3>
+              <div className="tooltip-container">
+                <h3 style={{
+                  fontSize: '1.3rem',
+                  fontWeight: '600',
+                  color: '#EAEAEA',
+                  marginBottom: '0.75rem',
+                  marginTop: 0
+                }}>
+                  Retirement Spending Plan
+                </h3>
+                <span className="tooltip-icon">i</span>
+                <div className="tooltip-box">
+                    <h4>How This Works</h4>
+                    <p>Your spending needs change over time. This plan models that reality by using three distinct phases:</p>
+                    <ul>
+                        <li><strong>Active Years (First 10):</strong> For when you're most active and spending is highest.</li>
+                        <li><strong>Slowing Down (Next 10):</strong> For a more settled, less expensive lifestyle.</li>
+                        <li><strong>Later Years (Remaining):</strong> For your quietest years, with the lowest spending.</li>
+                    </ul>
+                    <p style={{marginTop: '0.5rem'}}>The calculator automatically applies these phases to your chosen retirement duration.</p>
+                </div>
+              </div>
               <p style={{ 
                 color: '#BDBDBD', 
                 marginBottom: '2rem', 

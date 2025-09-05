@@ -3845,3 +3845,72 @@ body {
     grid-template-columns: 1fr 1fr;
   }
 }
+
+/* === UI Polish: Contextual Help Tooltip === */
+
+.tooltip-container {
+  position: relative; /* Establishes the positioning context for the tooltip box */
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem; /* Space between title and icon */
+}
+
+.tooltip-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 9999px;
+  background-color: #4A4A4A;
+  color: #BDBDBD;
+  font-size: 0.8rem;
+  font-weight: bold;
+  cursor: help;
+  transition: all 0.2s ease;
+}
+
+.tooltip-container:hover .tooltip-icon {
+  background-color: #FF8C00;
+  color: #1E1E1E;
+}
+
+.tooltip-box {
+  display: none; /* Hidden by default */
+  position: absolute;
+  bottom: 130%; /* Position it above the icon */
+  left: 50%;
+  transform: translateX(-50%);
+  width: 320px;
+  background-color: #3A3A3A;
+  border: 1px solid #555;
+  color: #EAEAEA;
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+  z-index: 50;
+  text-align: left;
+}
+
+.tooltip-container:hover .tooltip-box {
+  display: block; /* Show the tooltip when hovering over the container */
+}
+
+.tooltip-box h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #FF8C00;
+  margin-bottom: 0.5rem;
+}
+
+.tooltip-box p, .tooltip-box li {
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: #D1D5DB;
+}
+
+.tooltip-box ul {
+  list-style-type: disc;
+  padding-left: 1.25rem;
+  margin-top: 0.5rem;
+}
